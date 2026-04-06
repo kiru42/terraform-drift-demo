@@ -1,0 +1,141 @@
+name: Panorama Drift Detection
+
+on:
+  # Manual trigger
+  workflow_dispatch:
+  
+  # Event-driven trigger (external systems)
+  repository_dispatch:
+    types: [panorama-drift]
+  
+  # Scheduled drift detection (optional - disabled by default)
+  # schedule:
+  #   - cron: '*/30 * * * *'  # Every 30 minutes
+
+jobs:
+  detect-and-reconcile:
+    name: Detect and Reconcile Drift
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+          cache-dependency-path: mock-panorama/package-lock.json
+      
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: '1.6.0'
+      
+      - name: Install Mock API dependencies
+        working-directory: ./mock-panorama
+        run: |
+          npm ci
+          npm run build
+      
+      - name: Start Mock Panorama API
+        working-directory: ./mock-panorama
+        run: |
+          npm start &
+          echo "API_PID=$!" >> $GITHUB_ENV
+          
+          # Wait for API to be ready
+          for i in {1..30}; do
+            if curl -s http://localhost:3000/health > /dev/null 2>&1; then
+              echo "✅ API started successfully"
+              break
+            fi
+            if [ $i -eq 30 ]; then
+              echo "❌ API failed to start"
+              exit 1
+            fi
+            sleep 1
+          done
+      
+      - name: Terraform Init
+        working-directory: ./terraform
+        run: terraform init
+      
+      - name: Detect Drift
+        id: drift
+        working-directory: ./terraform
+        run: |
+          set +e
+          terraform plan -detailed-exitcode -no-color > plan.log 2>&1
+          PLAN_EXIT_CODE=$?
+          set -e
+          
+          cat plan.log
+          
+          if [ $PLAN_EXIT_CODE -eq 0 ]; then
+            echo "drift_detected=false" >> $GITHUB_OUTPUT
+            echo "✅ No drift detected"
+          elif [ $PLAN_EXIT_CODE -eq 2 ]; then
+            echo "drift_detected=true" >> $GITHUB_OUTPUT
+            echo "⚠️ DRIFT DETECTED!"
+          else
+            echo "❌ Terraform plan failed"
+            exit 1
+          fi
+      
+      - name: Validate Policy
+        if: steps.drift.outputs.drift_detected == 'true'
+        run: |
+          chmod +x ./scripts/validate-policy.sh
+          ./scripts/validate-policy.sh terraform/desired-config.json
+      
+      - name: Reconcile Configuration
+        if: steps.drift.outputs.drift_detected == 'true'
+        working-directory: ./terraform
+        run: |
+          echo "Applying configuration to reconcile drift..."
+          terraform apply -auto-approve
+      
+      - name: Verify No Drift
+        if: steps.drift.outputs.drift_detected == 'true'
+        working-directory: ./terraform
+        run: |
+          set +e
+          terraform plan -detailed-exitcode -no-color
+          VERIFY_EXIT_CODE=$?
+          set -e
+          
+          if [ $VERIFY_EXIT_CODE -eq 0 ]; then
+            echo "✅ Configuration reconciled successfully"
+          else
+            echo "❌ Drift still present after reconciliation"
+            exit 1
+          fi
+      
+      - name: Post Summary
+        if: always()
+        run: |
+          echo "## Drift Detection Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          if [ "${{ steps.drift.outputs.drift_detected }}" = "true" ]; then
+            echo "⚠️ **Drift Detected and Reconciled**" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "The firewall configuration had drifted from the desired state." >> $GITHUB_STEP_SUMMARY
+            echo "Terraform has automatically reconciled the configuration." >> $GITHUB_STEP_SUMMARY
+          else
+            echo "✅ **No Drift Detected**" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "The firewall configuration matches the desired state." >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Timestamp:** $(date -u +'%Y-%m-%d %H:%M:%S UTC')" >> $GITHUB_STEP_SUMMARY
+      
+      - name: Cleanup
+        if: always()
+        run: |
+          if [ ! -z "$API_PID" ]; then
+            kill $API_PID 2>/dev/null || true
+          fi

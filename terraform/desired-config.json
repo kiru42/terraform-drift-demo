@@ -1,0 +1,33 @@
+{
+  "version": "1.0.0",
+  "device": {
+    "hostname": "panorama-mock",
+    "model": "PA-5220"
+  },
+  "policies": {
+    "security": [
+      {
+        "name": "allow_internal_web",
+        "source": ["10.0.0.0/8"],
+        "destination": ["any"],
+        "service": ["http", "https"],
+        "action": "allow",
+        "enabled": true,
+        "description": "Allow internal networks to access web"
+      },
+      {
+        "name": "block_external_ssh",
+        "source": ["any"],
+        "destination": ["10.0.0.0/8"],
+        "service": ["ssh"],
+        "action": "drop",
+        "enabled": true,
+        "description": "Block external SSH to internal networks"
+      }
+    ]
+  },
+  "metadata": {
+    "lastModified": "2024-01-15T00:00:00Z",
+    "modifiedBy": "terraform"
+  }
+}
