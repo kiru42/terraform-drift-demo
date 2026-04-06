@@ -10,8 +10,8 @@ terraform {
 
 locals {
   # Merge security profiles from both possible locations
-  security_profiles = coalesce(
-    var.security_profiles,
+  # Returns null if no profiles are configured (e.g., for deny rules)
+  security_profiles = var.security_profiles != null ? var.security_profiles : (
     var.antivirus != null ? {
       antivirus      = var.antivirus
       anti_spyware   = var.anti_spyware
