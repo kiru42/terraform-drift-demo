@@ -69,8 +69,9 @@ echo -e "${BLUE}Checking for security violations (deny rules)...${NC}"
 DENY_COUNT=$(opa eval --data "$POLICY_FILE" --input "$CONFIG_FILE" \
     --format pretty 'data.firewall.security.deny' 2>/dev/null | \
     grep -c "Rule" || echo "0")
+DENY_COUNT=$(echo "$DENY_COUNT" | tr -d '\n\r' | xargs)
 
-if [ "$DENY_COUNT" -gt 0 ]; then
+if [ "$DENY_COUNT" -gt 0 ] 2>/dev/null; then
     echo -e "${RED}❌ Found $DENY_COUNT security violation(s):${NC}"
     echo ""
     opa eval --data "$POLICY_FILE" --input "$CONFIG_FILE" \
@@ -89,8 +90,9 @@ echo -e "${BLUE}Checking for best practice warnings...${NC}"
 WARN_COUNT=$(opa eval --data "$POLICY_FILE" --input "$CONFIG_FILE" \
     --format pretty 'data.firewall.security.warn' 2>/dev/null | \
     grep -c "Rule\|recommended" || echo "0")
+WARN_COUNT=$(echo "$WARN_COUNT" | tr -d '\n\r' | xargs)
 
-if [ "$WARN_COUNT" -gt 0 ]; then
+if [ "$WARN_COUNT" -gt 0 ] 2>/dev/null; then
     echo -e "${YELLOW}⚠️  Found $WARN_COUNT warning(s):${NC}"
     echo ""
     opa eval --data "$POLICY_FILE" --input "$CONFIG_FILE" \
