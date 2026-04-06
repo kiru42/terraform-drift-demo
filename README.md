@@ -501,9 +501,19 @@ provider "pfsense" {
 
 ## 📚 Learn More
 
-- [Architecture Details](docs/ARCHITECTURE.md)
-- [Drift Detection Explained](docs/DRIFT-DETECTION.md)
-- [Policy Validation Guide](docs/POLICY-VALIDATION.md)
+### Documentation
+
+- **[Complete Configuration Guide](docs/CONFIGURATION-GUIDE.md)** - Every option explained for beginners
+- **[Visual Guide with Diagrams](docs/VISUAL-GUIDE.md)** - Flowcharts, topologies, decision trees
+- [Architecture Details](docs/ARCHITECTURE.md) - System design and components
+- [Drift Detection Explained](docs/DRIFT-DETECTION.md) - How drift detection works
+- [Policy Validation Guide](docs/POLICY-VALIDATION.md) - Validation rules and best practices
+
+### Quick Links
+
+- 🎓 **New to firewalls?** Start with [Configuration Guide](docs/CONFIGURATION-GUIDE.md)
+- 📊 **Visual learner?** Check [Visual Guide](docs/VISUAL-GUIDE.md)
+- 🏗️ **Production deployment?** See [Migrating to Real Panorama](#-migrating-to-real-palo-alto-panorama)
 
 ## 🤝 Contributing
 
