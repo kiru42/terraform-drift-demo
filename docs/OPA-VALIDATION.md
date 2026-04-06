@@ -59,9 +59,9 @@
 ### Linux
 
 ```bash
-curl -L -o opa https://openpolicyagent.org/downloads/latest/opa_linux_amd64
-chmod +x opa
-sudo mv opa /usr/local/bin/
+curl -L -o /tmp/opa https://openpolicyagent.org/downloads/latest/opa_linux_amd64
+chmod +x /tmp/opa
+sudo mv /tmp/opa /usr/local/bin/
 ```
 
 ### macOS
@@ -71,9 +71,9 @@ sudo mv opa /usr/local/bin/
 brew install opa
 
 # Or direct download
-curl -L -o opa https://openpolicyagent.org/downloads/latest/opa_darwin_amd64
-chmod +x opa
-sudo mv opa /usr/local/bin/
+curl -L -o /tmp/opa https://openpolicyagent.org/downloads/latest/opa_darwin_amd64
+chmod +x /tmp/opa
+sudo mv /tmp/opa /usr/local/bin/
 ```
 
 ### Windows
@@ -509,9 +509,9 @@ Add to `.github/workflows/drift-detection.yml`:
 ```yaml
 - name: Install OPA
   run: |
-    curl -L -o opa https://openpolicyagent.org/downloads/latest/opa_linux_amd64
-    chmod +x opa
-    sudo mv opa /usr/local/bin/
+    curl -L -o /tmp/opa https://openpolicyagent.org/downloads/latest/opa_linux_amd64
+    chmod +x /tmp/opa
+    sudo mv /tmp/opa /usr/local/bin/
 
 - name: OPA Policy Validation
   run: |
@@ -624,9 +624,9 @@ opa eval --data opa/policies/firewall-security.rego \
 
 **Solution:**
 ```bash
-curl -L -o opa https://openpolicyagent.org/downloads/latest/opa_linux_amd64
-chmod +x opa
-sudo mv opa /usr/local/bin/
+curl -L -o /tmp/opa https://openpolicyagent.org/downloads/latest/opa_linux_amd64
+chmod +x /tmp/opa
+sudo mv /tmp/opa /usr/local/bin/
 ```
 
 ### Policy Syntax Error

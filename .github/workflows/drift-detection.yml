@@ -36,9 +36,9 @@ jobs:
       
       - name: Install OPA
         run: |
-          curl -L -o opa https://openpolicyagent.org/downloads/latest/opa_linux_amd64
-          chmod +x opa
-          sudo mv opa /usr/local/bin/
+          curl -L -o /tmp/opa https://openpolicyagent.org/downloads/latest/opa_linux_amd64
+          chmod +x /tmp/opa
+          sudo mv /tmp/opa /usr/local/bin/
           opa version
       
       - name: Validate Policy (OPA)
@@ -137,9 +137,9 @@ jobs:
       - name: Install OPA
         if: steps.drift.outputs.drift_detected == 'true'
         run: |
-          curl -L -o opa https://openpolicyagent.org/downloads/latest/opa_linux_amd64
-          chmod +x opa
-          sudo mv opa /usr/local/bin/
+          curl -L -o /tmp/opa https://openpolicyagent.org/downloads/latest/opa_linux_amd64
+          chmod +x /tmp/opa
+          sudo mv /tmp/opa /usr/local/bin/
           opa version
       
       - name: Validate Policy (OPA)
