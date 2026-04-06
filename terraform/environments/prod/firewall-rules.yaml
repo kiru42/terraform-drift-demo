@@ -1,0 +1,99 @@
+# Production Firewall Rules
+# Strict security with full compliance logging
+
+security_rules:
+  - name: allow_internal_web_prod
+    source:
+      - 10.0.0.0/8
+      - 172.16.0.0/12
+    destination:
+      - any
+    service:
+      - http
+      - https
+    action: allow
+    enabled: true
+    description: "Production: Allow internal networks to access web services"
+    tags:
+      environment: production
+      category: internet-access
+      compliance: pci-dss
+    log:
+      at_session_start: true
+      at_session_end: true
+      log_forwarding: prod-siem
+    security_profiles:
+      antivirus: strict-av-prod
+      antiSpyware: strict-prod
+      vulnerability: strict-prod
+      urlFiltering: strict-url-prod
+      fileBlocking: strict-file-blocking-prod
+      wildfire: strict-wildfire-prod
+      dataFiltering: pci-dss-dlp
+
+  - name: block_external_ssh_prod
+    source:
+      - any
+    destination:
+      - 10.0.0.0/8
+      - 172.16.0.0/12
+    service:
+      - ssh
+      - tcp/2222
+    action: drop
+    enabled: true
+    description: "Production: Block all external SSH to internal networks"
+    tags:
+      environment: production
+      category: security
+      compliance: critical
+    log:
+      at_session_start: false
+      at_session_end: true
+      log_forwarding: security-siem-prod
+
+  - name: allow_corporate_vpn_prod
+    source:
+      - vpn-users
+    destination:
+      - corporate-network
+    service:
+      - application-default
+    action: allow
+    enabled: true
+    description: "Production: Allow VPN users to access corporate resources"
+    tags:
+      environment: production
+      category: remote-access
+      compliance: standard
+    log:
+      at_session_start: true
+      at_session_end: true
+      log_forwarding: prod-siem
+    security_profiles:
+      antivirus: strict-av-prod
+      antiSpyware: strict-prod
+      vulnerability: strict-prod
+
+  - name: deny_p2p_applications_prod
+    source:
+      - any
+    destination:
+      - any
+    service:
+      - any
+    application:
+      - bittorrent
+      - torrent
+      - emule
+    action: drop
+    enabled: true
+    description: "Production: Block all P2P/torrent applications"
+    tags:
+      environment: production
+      category: security
+      compliance: critical
+    log:
+      at_session_start: false
+      at_session_end: true
+      log_forwarding: security-siem-prod

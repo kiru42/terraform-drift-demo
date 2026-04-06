@@ -1,0 +1,37 @@
+# Development Firewall Rules
+# Minimal restrictions for local dev
+
+security_rules:
+  - name: allow_all_dev
+    source:
+      - any
+    destination:
+      - any
+    service:
+      - any
+    action: allow
+    enabled: true
+    description: "Dev: Allow all traffic for local testing"
+    tags:
+      environment: development
+      category: unrestricted
+    log:
+      at_session_start: false
+      at_session_end: false
+
+  - name: allow_ssh_dev
+    source:
+      - any
+    destination:
+      - dev-servers
+    service:
+      - ssh
+    action: allow
+    enabled: true
+    description: "Dev: Allow SSH to development servers"
+    tags:
+      environment: development
+      category: admin
+    log:
+      at_session_start: false
+      at_session_end: false

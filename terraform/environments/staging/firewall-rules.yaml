@@ -1,0 +1,62 @@
+# Staging Firewall Rules
+# Test-friendly policies with moderate security
+
+security_rules:
+  - name: allow_internal_web_staging
+    source:
+      - 10.0.0.0/8
+      - 172.16.0.0/12
+    destination:
+      - any
+    service:
+      - http
+      - https
+    action: allow
+    enabled: true
+    description: "Staging: Allow internal web access for testing"
+    tags:
+      environment: staging
+      category: internet-access
+    log:
+      at_session_start: false
+      at_session_end: true
+      log_forwarding: staging-syslog
+    security_profiles:
+      antivirus: default-av-staging
+      antiSpyware: default-staging
+      vulnerability: default-staging
+
+  - name: allow_test_ssh_staging
+    source:
+      - qa-network
+      - ci-cd-runners
+    destination:
+      - staging-servers
+    service:
+      - ssh
+    action: allow
+    enabled: true
+    description: "Staging: Allow SSH for automated testing"
+    tags:
+      environment: staging
+      category: automation
+    log:
+      at_session_start: true
+      at_session_end: true
+
+  - name: allow_debug_tools_staging
+    source:
+      - developer-network
+    destination:
+      - staging-servers
+    service:
+      - any
+    action: allow
+    enabled: true
+    description: "Staging: Allow debug tools for developers"
+    tags:
+      environment: staging
+      category: development
+    log:
+      at_session_start: false
+      at_session_end: false

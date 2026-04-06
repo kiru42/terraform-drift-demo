@@ -1,0 +1,8 @@
+module github.com/kiru42/terraform-drift-demo/test
+
+go 1.22
+
+require (
+	github.com/gruntwork-io/terratest v0.46.11
+	github.com/stretchr/testify v1.8.4
+)
