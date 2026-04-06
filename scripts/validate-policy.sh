@@ -33,17 +33,18 @@ echo "✅ JSON format valid"
 # Extract policies
 POLICIES=$(jq -r '.policies.security[]' "$CONFIG_FILE")
 
-# Rule 1: No blanket "deny all" rules (too restrictive)
-DENY_ALL_COUNT=$(jq -r '[.policies.security[] | select(.action == "deny" and (.source | index("any")) and (.destination | index("any")))] | length' "$CONFIG_FILE")
+# Rule 1: No blanket "deny all" rules (except application-specific)
+# Allow deny rules if they target specific applications (P2P, risky apps, etc.)
+DENY_ALL_COUNT=$(jq -r '[.policies.security[] | select(.action == "deny" and (.source | index("any")) and (.destination | index("any")) and (.application == null or (.application | length) == 0))] | length' "$CONFIG_FILE")
 
 if [ "$DENY_ALL_COUNT" -gt 0 ]; then
   echo -e "${RED}❌ VALIDATION FAILED: Found $DENY_ALL_COUNT blanket 'deny all' rule(s)${NC}"
-  echo "Blanket deny rules are too restrictive and should be avoided."
-  jq -r '.policies.security[] | select(.action == "deny" and (.source | index("any")) and (.destination | index("any"))) | .name' "$CONFIG_FILE"
+  echo "Blanket deny rules without specific application targeting are too restrictive."
+  jq -r '.policies.security[] | select(.action == "deny" and (.source | index("any")) and (.destination | index("any")) and (.application == null or (.application | length) == 0)) | .name' "$CONFIG_FILE"
   exit 1
 fi
 
-echo "✅ No blanket deny rules"
+echo "✅ No blanket deny rules (application-specific deny rules allowed)"
 
 # Rule 2: All rules must have a name
 UNNAMED_COUNT=$(jq -r '[.policies.security[] | select(.name == "" or .name == null)] | length' "$CONFIG_FILE")
