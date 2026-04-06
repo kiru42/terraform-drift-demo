@@ -35,7 +35,6 @@ jobs:
           ./scripts/validate-policy.sh terraform/desired-config.json
       
       - name: Install OPA
-        continue-on-error: true
         run: |
           curl -L -o /tmp/opa https://openpolicyagent.org/downloads/latest/opa_linux_amd64
           chmod +x /tmp/opa
@@ -43,10 +42,9 @@ jobs:
           opa version
       
       - name: Validate Policy (OPA)
-        continue-on-error: true
         run: |
           chmod +x ./scripts/validate-opa.sh
-          ./scripts/validate-opa.sh terraform/desired-config.json || echo "⚠️ OPA validation skipped (compatibility issues)"
+          ./scripts/validate-opa.sh terraform/desired-config.json
       
       - name: Policy Validation Summary
         if: always()
@@ -138,7 +136,6 @@ jobs:
       
       - name: Install OPA
         if: steps.drift.outputs.drift_detected == 'true'
-        continue-on-error: true
         run: |
           curl -L -o /tmp/opa https://openpolicyagent.org/downloads/latest/opa_linux_amd64
           chmod +x /tmp/opa
@@ -147,10 +144,9 @@ jobs:
       
       - name: Validate Policy (OPA)
         if: steps.drift.outputs.drift_detected == 'true'
-        continue-on-error: true
         run: |
           chmod +x ./scripts/validate-opa.sh
-          ./scripts/validate-opa.sh terraform/desired-config.json || echo "⚠️ OPA validation skipped (compatibility issues)"
+          ./scripts/validate-opa.sh terraform/desired-config.json
       
       - name: Reconcile Configuration
         if: steps.drift.outputs.drift_detected == 'true'
