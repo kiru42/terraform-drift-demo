@@ -94,7 +94,7 @@ resource "null_resource" "panorama_config" {
       RESPONSE=$(curl -X POST ${var.api_endpoint}/config \
         -H "Content-Type: application/json" \
         -d @${var.desired_config_file} \
-        -s -w "\n%{http_code}")
+        -s -w "\n%%{http_code}")
       
       HTTP_CODE=$(echo "$RESPONSE" | tail -n1)
       BODY=$(echo "$RESPONSE" | sed '$d')
