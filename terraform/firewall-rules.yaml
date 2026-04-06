@@ -1,0 +1,704 @@
+# Firewall Configuration
+# This YAML file defines all firewall rules in a structured, readable format.
+# 
+# Security rules follow the principle of least privilege:
+# - Explicit allow rules with security profiles
+# - Deny rules for known-bad traffic
+# - Logging for audit compliance
+
+security_rules:
+  - name: allow_internal_web
+    source:
+      - 10.0.0.0/8
+      - 172.16.0.0/12
+    destination:
+      - any
+    service:
+      - http
+      - https
+    action: allow
+    enabled: true
+    description: "Allow internal networks to access web services"
+    tags:
+      category: internet-access
+      owner: network-team
+      compliance: standard
+    log:
+      at_session_start: true
+      at_session_end: true
+      log_forwarding: syslog-server
+    security_profiles:
+      antivirus: default-av-profile
+      antiSpyware: default-anti-spyware
+      vulnerability: default-vulnerability
+      urlFiltering: default-url-filtering
+      fileBlocking: default-file-blocking
+      wildfire: default
+
+  - name: block_external_ssh
+    source:
+      - any
+    destination:
+      - 10.0.0.0/8
+      - 172.16.0.0/12
+      - 192.168.0.0/16
+    service:
+      - ssh
+      - tcp/2222
+    action: drop
+    enabled: true
+    description: "Block external SSH to internal networks (security hardening)"
+    tags:
+      category: security
+      owner: security-team
+      compliance: critical
+      threat-prevention: brute-force
+    log:
+      at_session_start: false
+      at_session_end: true
+      log_forwarding: security-siem
+
+  - name: allow_corporate_vpn
+    source:
+      - vpn-users
+      - vpn-gateway-pool
+    destination:
+      - corporate-network
+      - 10.50.0.0/16
+    service:
+      - application-default
+      - tcp/443
+      - udp/1194
+    action: allow
+    enabled: true
+    description: "Allow VPN users to access corporate resources"
+    tags:
+      category: remote-access
+      owner: it-team
+      compliance: standard
+    log:
+      at_session_start: true
+      at_session_end: true
+      log_forwarding: vpn-logs
+    security_profiles:
+      antivirus: default-av-profile
+      antiSpyware: strict-anti-spyware
+      vulnerability: strict-vulnerability
+      urlFiltering: strict-browsing
+      fileBlocking: sensitive-data-profile
+      wildfire: wildfire-analysis
+      dataFiltering: pci-dss-data-filter
+
+  - name: deny_p2p_protocols
+    source:
+      - any
+    destination:
+      - any
+    service:
+      - bittorrent
+      - p2p-applications
+    application:
+      - bittorrent
+      - torrent
+      - utorrent
+      - emule
+      - kazaa
+    action: deny
+    enabled: true
+    description: "Block peer-to-peer file sharing protocols (bandwidth + legal risk)"
+    tags:
+      category: bandwidth-management
+      owner: network-team
+      compliance: policy-enforcement
+    log:
+      at_session_start: true
+      at_session_end: true
+      log_forwarding: bandwidth-logs
+
+  - name: allow_dmz_to_database
+    source:
+      - dmz-web-servers
+      - 10.100.10.0/24
+    destination:
+      - database-cluster
+      - 10.200.20.0/24
+    service:
+      - mysql
+      - tcp/3306
+      - postgresql
+      - tcp/5432
+    action: allow
+    enabled: true
+    description: "Allow DMZ web servers to access backend database cluster"
+    tags:
+      category: application-tier
+      owner: devops-team
+      compliance: segmentation
+      app-id: ecommerce-platform
+    log:
+      at_session_start: false
+      at_session_end: true
+      log_forwarding: app-logs
+    security_profiles:
+      antivirus: strict-av
+      antiSpyware: strict
+      vulnerability: strict-vulnerability
+      fileBlocking: strict-file-blocking
+      wildfire: default
+      dataFiltering: database-query-protection
+
+  - name: time_restricted_guest_wifi
+    source:
+      - guest-wifi-zone
+      - 192.168.99.0/24
+    destination:
+      - any
+    service:
+      - http
+      - https
+      - dns
+    action: allow
+    enabled: true
+    description: "Guest WiFi access restricted to business hours (8h-18h weekdays)"
+    tags:
+      category: guest-access
+      owner: it-team
+      compliance: temporary-access
+    log:
+      at_session_start: true
+      at_session_end: true
+      log_forwarding: guest-logs
+    security_profiles:
+      antivirus: guest-av-profile
+      antiSpyware: default-anti-spyware
+      vulnerability: default-vulnerability
+      urlFiltering: guest-safe-browsing
+      fileBlocking: guest-file-blocking
+      wildfire: default
+
+  - name: block_known_malicious_ips
+    source:
+      - external-threat-feed
+      - threat-intel-list
+    destination:
+      - any
+    service:
+      - any
+    action: drop
+    enabled: true
+    description: "Drop traffic from known malicious IPs (threat intelligence feeds)"
+    tags:
+      category: threat-prevention
+      owner: security-team
+      compliance: critical
+      auto-updated: true
+    log:
+      at_session_start: true
+      at_session_end: true
+      log_forwarding: security-siem
+
+  - name: allow_outbound_email
+    source:
+      - mail-servers
+      - 10.20.30.0/24
+    destination:
+      - any
+    service:
+      - smtp
+      - tcp/25
+      - smtps
+      - tcp/465
+      - submission
+      - tcp/587
+    action: allow
+    enabled: true
+    description: "Allow mail servers to send outbound email"
+    tags:
+      category: mail-infrastructure
+      owner: it-team
+      compliance: standard
+    log:
+      at_session_start: false
+      at_session_end: true
+      log_forwarding: mail-logs
+    security_profiles:
+      antivirus: email-av-profile
+      antiSpyware: default-anti-spyware
+      vulnerability: default-vulnerability
+      fileBlocking: email-attachment-filter
+      wildfire: email-wildfire-analysis
+      dataFiltering: email-dlp-profile
+
+  - name: allow_icmp_diagnostic
+    source:
+      - monitoring-servers
+      - 10.10.10.0/24
+    destination:
+      - any
+    service:
+      - icmp
+      - ping
+      - traceroute
+    action: allow
+    enabled: true
+    description: "Allow ICMP from monitoring servers for network diagnostics"
+    tags:
+      category: network-operations
+      owner: network-team
+      compliance: standard
+    log:
+      at_session_start: false
+      at_session_end: true
+
+  - name: deny_risky_applications
+    source:
+      - any
+    destination:
+      - any
+    service:
+      - application-default
+    application:
+      - teamviewer
+      - anydesk
+      - logmein
+      - remote-desktop-sharing
+      - tor
+      - proxy-anonymizers
+    action: deny
+    enabled: true
+    description: "Block risky remote access and anonymization applications"
+    tags:
+      category: security
+      owner: security-team
+      compliance: critical
+      risk-level: high
+    log:
+      at_session_start: true
+      at_session_end: true
+      log_forwarding: security-siem
+
+  - name: allow_dev_team_ssh_managed
+    source:
+      - dev-team-users
+    destination:
+      - development-servers
+      - 10.30.0.0/16
+    service:
+      - ssh
+      - tcp/22
+    action: allow
+    enabled: true
+    description: "Allow dev team SSH access to development environment (user-based)"
+    tags:
+      category: developer-access
+      owner: devops-team
+      compliance: identity-aware
+      environment: development
+    log:
+      at_session_start: true
+      at_session_end: true
+      log_forwarding: audit-logs
+    security_profiles:
+      antivirus: default-av-profile
+      antiSpyware: strict
+      vulnerability: strict-vulnerability
+      fileBlocking: default-file-blocking
+      wildfire: default
+
+  - name: emergency_disable_rule
+    source:
+      - any
+    destination:
+      - any
+    service:
+      - any
+    action: allow
+    enabled: false
+    description: "Emergency allow-all rule (DISABLED by default, activate only during incident response)"
+    tags:
+      category: emergency
+      owner: security-team
+      compliance: incident-response-only
+      approval-required: ciso
+    log:
+      at_session_start: true
+      at_session_end: true
+      log_forwarding: emergency-logs
+
+  - name: test_drift_rule
+    source:
+      - 192.168.100.0/24
+    destination:
+      - any
+    service:
+      - http
+      - https
+    action: allow
+    enabled: true
+    description: "Test rule to demonstrate drift detection"
+    tags:
+      category: test
+      owner: devops-team
+    log:
+      at_session_start: false
+      at_session_end: true
+
+  - name: allow_trust_to_dmz_https
+    source:
+      - 10.0.0.0/8
+      - internal-users
+    destination:
+      - dmz-web-servers
+      - 10.100.10.0/24
+    service:
+      - https
+      - tcp/443
+    application:
+      - web-browsing
+      - ssl
+    action: allow
+    enabled: true
+    description: "East-West traffic: Internal users to DMZ web servers (micro-segmentation)"
+    tags:
+      category: east-west
+      zone: trust-to-dmz
+      compliance: pci-dss
+    log:
+      at_session_start: true
+      at_session_end: true
+      log_forwarding: siem-compliance
+    security_profiles:
+      antivirus: strict-av
+      antiSpyware: strict
+      vulnerability: strict
+      urlFiltering: default
+      fileBlocking: strict-file-blocking
+      wildfire: default
+      dataFiltering: pci-dss-data-filter
+
+  - name: allow_aws_s3_access
+    source:
+      - 10.0.0.0/8
+      - app-servers
+    destination:
+      - aws-s3-prefix-list
+    service:
+      - application-default
+    application:
+      - amazon-s3
+    action: allow
+    enabled: true
+    description: "Cloud integration: Allow access to AWS S3 buckets"
+    tags:
+      category: cloud-integration
+      cloud-provider: aws
+      service: s3
+    log:
+      at_session_start: false
+      at_session_end: true
+      log_forwarding: cloud-access-logs
+    security_profiles:
+      antivirus: cloud-av-profile
+      antiSpyware: default-anti-spyware
+      vulnerability: default-vulnerability
+      fileBlocking: cloud-file-blocking
+      wildfire: cloud-wildfire-analysis
+
+  - name: allow_azure_storage
+    source:
+      - 10.0.0.0/8
+      - app-servers
+    destination:
+      - azure-storage-fqdn
+    service:
+      - application-default
+    application:
+      - ms-azure-storage
+    action: allow
+    enabled: true
+    description: "Cloud integration: Allow access to Azure Blob Storage"
+    tags:
+      category: cloud-integration
+      cloud-provider: azure
+      service: blob-storage
+    log:
+      at_session_start: false
+      at_session_end: true
+      log_forwarding: cloud-access-logs
+    security_profiles:
+      antivirus: cloud-av-profile
+      antiSpyware: default-anti-spyware
+      vulnerability: default-vulnerability
+      fileBlocking: cloud-file-blocking
+      wildfire: cloud-wildfire-analysis
+
+  - name: allow_gcp_storage
+    source:
+      - 10.0.0.0/8
+    destination:
+      - gcp-storage-fqdn
+    service:
+      - application-default
+    application:
+      - google-cloud-storage
+    action: allow
+    enabled: true
+    description: "Cloud integration: Allow access to Google Cloud Storage"
+    tags:
+      category: cloud-integration
+      cloud-provider: gcp
+      service: cloud-storage
+    log:
+      at_session_start: false
+      at_session_end: true
+      log_forwarding: cloud-access-logs
+    security_profiles:
+      antivirus: cloud-av-profile
+      antiSpyware: default-anti-spyware
+      vulnerability: default-vulnerability
+      fileBlocking: cloud-file-blocking
+      wildfire: cloud-wildfire-analysis
+
+  - name: allow_office365_approved
+    source:
+      - corporate-users
+      - 10.0.0.0/8
+    destination:
+      - any
+    service:
+      - application-default
+    application:
+      - office365-enterprise-access
+      - ms-onedrive-enterprise
+      - ms-teams
+    action: allow
+    enabled: true
+    description: "SaaS governance: Allow approved Office 365 services"
+    tags:
+      category: saas-governance
+      approved: yes
+      vendor: microsoft
+    log:
+      at_session_start: false
+      at_session_end: true
+      log_forwarding: saas-logs
+    security_profiles:
+      antivirus: saas-av-profile
+      antiSpyware: saas-anti-spyware
+      vulnerability: default-vulnerability
+      urlFiltering: saas-url-filtering
+      fileBlocking: saas-file-blocking
+      wildfire: saas-wildfire
+      dataFiltering: saas-dlp-profile
+
+  - name: block_personal_cloud_storage
+    source:
+      - corporate-users
+      - 10.0.0.0/8
+    destination:
+      - any
+    service:
+      - application-default
+    application:
+      - dropbox-base
+      - google-drive-base
+      - box-base
+      - icloud-base
+    action: deny
+    enabled: true
+    description: "SaaS governance: Block unauthorized personal cloud storage (shadow IT)"
+    tags:
+      category: saas-governance
+      shadow-it: blocked
+      compliance: data-loss-prevention
+    log:
+      at_session_start: true
+      at_session_end: true
+      log_forwarding: security-incidents
+
+  - name: block_high_risk_countries
+    source:
+      - high-risk-geoip
+    destination:
+      - corporate-network
+      - 10.0.0.0/8
+      - dmz-servers
+    service:
+      - any
+    action: drop
+    enabled: true
+    description: "Geolocation blocking: Drop traffic from high-risk countries (CN, RU, KP, IR, SY)"
+    tags:
+      category: geolocation-blocking
+      risk-level: high
+      compliance: export-control
+    log:
+      at_session_start: true
+      at_session_end: true
+      log_forwarding: threat-intelligence
+
+  - name: allow_verified_china_partners
+    source:
+      - verified-china-partners
+    destination:
+      - partner-portal
+      - 10.50.100.0/24
+    service:
+      - https
+      - tcp/443
+    action: allow
+    enabled: true
+    description: "Geolocation exception: Allow verified business partners from China"
+    tags:
+      category: geolocation-exception
+      partner: verified
+      approval: legal-department
+    log:
+      at_session_start: true
+      at_session_end: true
+      log_forwarding: partner-access-logs
+    security_profiles:
+      antivirus: strict-av
+      antiSpyware: strict
+      vulnerability: strict-vulnerability
+      fileBlocking: strict-file-blocking
+      wildfire: default
+
+  - name: allow_k8s_pod_to_pod
+    source:
+      - k8s-pod-network
+      - 10.244.0.0/16
+    destination:
+      - k8s-pod-network
+      - 10.244.0.0/16
+    service:
+      - application-default
+    application:
+      - kubernetes
+      - http
+      - https
+      - grpc
+    action: allow
+    enabled: true
+    description: "Container traffic: Allow Kubernetes pod-to-pod communication (CNI network)"
+    tags:
+      category: container-networking
+      platform: kubernetes
+      traffic-type: east-west
+    log:
+      at_session_start: false
+      at_session_end: true
+    security_profiles:
+      antivirus: container-av-profile
+      antiSpyware: default-anti-spyware
+      vulnerability: container-vulnerability-protection
+      fileBlocking: default-file-blocking
+      wildfire: default
+
+  - name: allow_k8s_to_external_apis
+    source:
+      - k8s-pod-network
+      - 10.244.0.0/16
+    destination:
+      - any
+    service:
+      - application-default
+    application:
+      - web-browsing
+      - ssl
+      - http-proxy
+    action: allow
+    enabled: true
+    description: "Container traffic: Allow pods to access external APIs (egress)"
+    tags:
+      category: container-networking
+      platform: kubernetes
+      traffic-type: egress
+    log:
+      at_session_start: false
+      at_session_end: true
+      log_forwarding: k8s-egress-logs
+    security_profiles:
+      antivirus: container-av-profile
+      antiSpyware: default-anti-spyware
+      vulnerability: default-vulnerability
+      fileBlocking: default-file-blocking
+      wildfire: default
+
+  - name: force_dns_to_port_53
+    source:
+      - any
+    destination:
+      - dns-servers
+      - 10.10.10.53
+    service:
+      - tcp/53
+      - udp/53
+    application:
+      - dns
+    action: allow
+    enabled: true
+    description: "Application override: Force DNS application identification on port 53"
+    tags:
+      category: application-override
+      protocol: dns
+    log:
+      at_session_start: false
+      at_session_end: true
+
+  - name: compliance_pci_dss_logging
+    source:
+      - any
+    destination:
+      - pci-dss-servers
+      - 10.200.50.0/24
+    service:
+      - any
+    action: allow
+    enabled: true
+    description: "Compliance: Enhanced logging for PCI-DSS cardholder data environment"
+    tags:
+      category: compliance
+      standard: pci-dss
+      scope: cardholder-data-environment
+    log:
+      at_session_start: true
+      at_session_end: true
+      log_forwarding: siem-compliance-pci
+    security_profiles:
+      antivirus: strict-av
+      antiSpyware: strict
+      vulnerability: critical-high-medium
+      urlFiltering: strict
+      fileBlocking: strict-file-blocking
+      dataFiltering: credit-card-protection
+      wildfire: default
+
+  - name: compliance_hipaa_healthcare
+    source:
+      - healthcare-apps
+    destination:
+      - patient-data-servers
+      - 10.200.60.0/24
+    service:
+      - https
+      - tcp/3389
+    action: allow
+    enabled: true
+    description: "Compliance: HIPAA-compliant access to patient health information (PHI) systems"
+    tags:
+      category: compliance
+      standard: hipaa
+      data-type: phi
+    log:
+      at_session_start: true
+      at_session_end: true
+      log_forwarding: siem-compliance-hipaa
+    security_profiles:
+      dataFiltering: phi-protection
+      antivirus: strict-av
+      fileBlocking: strict-file-blocking
+      antiSpyware: strict
+      vulnerability: strict-vulnerability
+      wildfire: default
+

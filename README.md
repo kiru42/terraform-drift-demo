@@ -8,11 +8,38 @@ Production-like demo project simulating drift detection and reconciliation for a
 terraform-drift-demo/
 ├── mock-panorama/          # Fake firewall API (TypeScript + Express)
 ├── terraform/              # Terraform configuration
+│   ├── main.tf             # Simple demo (JSON-based)
+│   ├── main-modular.tf     # Production-ready (YAML + Modules) ✨
+│   ├── firewall-rules.yaml # Human-readable rule definitions
+│   └── modules/            # Reusable Terraform modules
 ├── .github/workflows/      # GitHub Actions pipeline
 ├── scripts/                # Helper scripts
 ├── docs/                   # Documentation
+│   ├── MODULAR-ARCHITECTURE.md  # 📘 Production patterns guide
+│   ├── CONFIGURATION-GUIDE.md
+│   └── OPA-VALIDATION.md
 └── README.md
 ```
+
+## 🎯 Two Architectures Available
+
+This demo includes **two Terraform architectures** to demonstrate different approaches:
+
+### **1. Simple Demo (JSON-based)** - `main.tf`
+- ✅ Easy to understand
+- ✅ Self-contained
+- ✅ Good for learning Terraform basics
+- ❌ Not production-ready (2400+ line JSON file)
+
+### **2. Production-Ready (Modular)** - `main-modular.tf` ⭐
+- ✅ Reusable modules (`modules/security-rule/`, `modules/nat-rule/`)
+- ✅ YAML configuration (`firewall-rules.yaml`)
+- ✅ DRY (Don't Repeat Yourself) principles
+- ✅ Type-safe with Terraform validation
+- ✅ Git-friendly (clean diffs)
+- ✅ Scalable to hundreds of rules
+
+**👉 For production use, see [MODULAR-ARCHITECTURE.md](docs/MODULAR-ARCHITECTURE.md)**
 
 ## 🎯 Key Features
 
