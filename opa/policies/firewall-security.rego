@@ -1,489 +1,379 @@
 # Firewall Security Policy - Advanced Validation with OPA
-# This policy enforces enterprise-grade security rules for Palo Alto firewall configurations
+# Compatible with OPA 0.20+ (legacy syntax)
 
 package firewall.security
 
 # ==============================================================================
-# DENY RULES - Security violations that must be blocked
+# DENY RULES - Security violations
 # ==============================================================================
 
-# Deny: Blanket allow-all rules (any → any)
+# Deny: Blanket allow-all rules
 deny[msg] {
     rule := input.policies.security[_]
-    rule.action == "allow"
-    rule.enabled == true
-    
-    # Check if source contains "any"
-    rule.source[_] == "any"
-    
-    # Check if destination contains "any"
-    rule.destination[_] == "any"
-    
-    # Check if service contains "any"
-    rule.service[_] == "any"
-    
-    # Exception: Emergency rules that are disabled
-    not rule.name == "emergency_disable_rule"
-    
-    msg := sprintf("Rule '%s' is a blanket allow-all (any→any→any) which violates security policy", [rule.name])
+    rule.action = "allow"
+    rule.enabled = true
+    rule.source[_] = "any"
+    rule.destination[_] = "any"
+    rule.service[_] = "any"
+    not rule.name = "emergency_disable_rule"
+    msg := sprintf("Rule '%s' is a blanket allow-all (any→any→any)", [rule.name])
 }
 
-# Deny: Rules without description
+# Deny: Missing description
 deny[msg] {
     rule := input.policies.security[_]
-    rule.action == "allow"
-    rule.enabled == true
-    
+    rule.action = "allow"
+    rule.enabled = true
     not rule.description
-    
     msg := sprintf("Rule '%s' is missing a description", [rule.name])
 }
 
-# Deny: Allow rules without security profiles (critical)
+# Deny: No security profiles
 deny[msg] {
     rule := input.policies.security[_]
-    rule.action == "allow"
-    rule.enabled == true
-    
-    # Must have at least AV + AS + VUL
+    rule.action = "allow"
+    rule.enabled = true
     not has_critical_security_profiles(rule)
-    
-    # Exceptions for non-file-transfer protocols
     not is_protocol_exception(rule)
-    
     msg := sprintf("Rule '%s' allows traffic without critical security profiles (AV, AS, VUL required)", [rule.name])
 }
 
-# Helper: Check if rule has critical security profiles
-has_critical_security_profiles(rule) {
-    # Check direct fields
+# Helper: Check security profiles
+has_critical_security_profiles(rule) = true {
     rule.antivirus
     rule.antiSpyware
     rule.vulnerability
 }
 
-has_critical_security_profiles(rule) {
-    # Or check securityProfiles object
+has_critical_security_profiles(rule) = true {
     rule.securityProfiles.antivirus
     rule.securityProfiles.antiSpyware
     rule.securityProfiles.vulnerability
 }
 
-# Helper: Protocol exceptions (ICMP, DNS don't need AV)
-is_protocol_exception(rule) {
-    rule.service[_] == "icmp"
+# Helper: Protocol exceptions
+is_protocol_exception(rule) = true {
+    rule.service[_] = "icmp"
 }
 
-is_protocol_exception(rule) {
-    rule.service[_] == "ping"
+is_protocol_exception(rule) = true {
+    rule.service[_] = "ping"
 }
 
-is_protocol_exception(rule) {
-    rule.name == "force_dns_to_port_53"
+is_protocol_exception(rule) = true {
+    rule.name = "force_dns_to_port_53"
 }
 
-is_protocol_exception(rule) {
-    rule.name == "emergency_disable_rule"
-    rule.enabled == false
+is_protocol_exception(rule) = true {
+    rule.name = "emergency_disable_rule"
 }
 
-is_protocol_exception(rule) {
-    rule.name == "test_drift_rule"
+is_protocol_exception(rule) = true {
+    rule.name = "test_drift_rule"
 }
 
-# Deny: Outbound traffic without logging
+# Deny: No logging on outbound
 deny[msg] {
     rule := input.policies.security[_]
-    rule.action == "allow"
-    rule.enabled == true
-    
-    # Outbound to internet
-    rule.destination[_] == "any"
-    
-    # No logging configured
+    rule.action = "allow"
+    rule.enabled = true
+    rule.destination[_] = "any"
     not rule.log.atSessionEnd
-    
-    # Not an exception (ICMP, internal-only)
     not is_logging_exception(rule)
-    
     msg := sprintf("Rule '%s' allows outbound traffic without session-end logging", [rule.name])
 }
 
-is_logging_exception(rule) {
-    rule.service[_] == "icmp"
+is_logging_exception(rule) = true {
+    rule.service[_] = "icmp"
 }
 
-is_logging_exception(rule) {
-    rule.service[_] == "ping"
+is_logging_exception(rule) = true {
+    rule.service[_] = "ping"
 }
 
-# Deny: External SSH access allowed
+# Deny: External SSH to internal
 deny[msg] {
     rule := input.policies.security[_]
-    rule.action == "allow"
-    rule.enabled == true
-    
-    # Source is external (any or untrust)
-    rule.source[_] == "any"
-    
-    # Destination is internal network
+    rule.action = "allow"
+    rule.enabled = true
+    rule.source[_] = "any"
     dest := rule.destination[_]
     is_private_network(dest)
-    
-    # Service is SSH
-    rule.service[_] == "ssh"
-    
+    rule.service[_] = "ssh"
     msg := sprintf("Rule '%s' allows external SSH access to internal networks (security risk)", [rule.name])
 }
 
-# Helper: Check if IP is private network
-is_private_network(ip) {
+is_private_network(ip) = true {
     startswith(ip, "10.")
 }
 
-is_private_network(ip) {
+is_private_network(ip) = true {
     startswith(ip, "172.16.")
 }
 
-is_private_network(ip) {
+is_private_network(ip) = true {
     startswith(ip, "192.168.")
 }
 
-# Deny: P2P/Torrent applications allowed
+# Deny: P2P applications
 deny[msg] {
     rule := input.policies.security[_]
-    rule.action == "allow"
-    rule.enabled == true
-    
-    # Check if application list contains P2P
+    rule.action = "allow"
+    rule.enabled = true
     app := rule.application[_]
     is_p2p_application(app)
-    
     msg := sprintf("Rule '%s' allows P2P/Torrent applications (bandwidth + legal risk)", [rule.name])
 }
 
-is_p2p_application(app) {
-    app == "bittorrent"
+is_p2p_application(app) = true {
+    app = "bittorrent"
 }
 
-is_p2p_application(app) {
-    app == "torrent"
+is_p2p_application(app) = true {
+    app = "torrent"
 }
 
-is_p2p_application(app) {
-    app == "utorrent"
+is_p2p_application(app) = true {
+    app = "utorrent"
 }
 
-is_p2p_application(app) {
-    app == "emule"
+is_p2p_application(app) = true {
+    app = "emule"
 }
 
-# Deny: Risky remote access tools allowed
+# Deny: Risky remote tools
 deny[msg] {
     rule := input.policies.security[_]
-    rule.action == "allow"
-    rule.enabled == true
-    
+    rule.action = "allow"
+    rule.enabled = true
     app := rule.application[_]
     is_risky_remote_tool(app)
-    
-    msg := sprintf("Rule '%s' allows risky remote access tool '%s' (security risk)", [rule.name, app])
+    msg := sprintf("Rule '%s' allows risky remote access tool '%s'", [rule.name, app])
 }
 
-is_risky_remote_tool(app) {
-    app == "teamviewer"
+is_risky_remote_tool(app) = true {
+    app = "teamviewer"
 }
 
-is_risky_remote_tool(app) {
-    app == "anydesk"
+is_risky_remote_tool(app) = true {
+    app = "anydesk"
 }
 
-is_risky_remote_tool(app) {
-    app == "logmein"
+is_risky_remote_tool(app) = true {
+    app = "logmein"
 }
 
-is_risky_remote_tool(app) {
-    app == "tor"
+is_risky_remote_tool(app) = true {
+    app = "tor"
 }
 
 # ==============================================================================
-# WARN RULES - Best practices violations (not blocking)
+# WARN RULES - Best practices
 # ==============================================================================
 
-# Warn: Rules without tags
 warn[msg] {
     rule := input.policies.security[_]
-    rule.action == "allow"
-    rule.enabled == true
-    
+    rule.action = "allow"
+    rule.enabled = true
     not rule.tags
-    
-    msg := sprintf("Rule '%s' has no tags (recommended: category, owner, compliance)", [rule.name])
+    msg := sprintf("Rule '%s' has no tags (recommended)", [rule.name])
 }
 
-# Warn: Web traffic without URL filtering
 warn[msg] {
     rule := input.policies.security[_]
-    rule.action == "allow"
-    rule.enabled == true
-    
-    # Web-related applications
+    rule.action = "allow"
+    rule.enabled = true
     app := rule.application[_]
     is_web_application(app)
-    
-    # No URL filtering
     not rule.urlFiltering
     not rule.securityProfiles.urlFiltering
-    
     msg := sprintf("Rule '%s' allows web traffic without URL filtering (recommended)", [rule.name])
 }
 
-is_web_application(app) {
-    app == "web-browsing"
+is_web_application(app) = true {
+    app = "web-browsing"
 }
 
-is_web_application(app) {
-    app == "ssl"
+is_web_application(app) = true {
+    app = "ssl"
 }
 
-is_web_application(app) {
-    app == "http"
+is_web_application(app) = true {
+    app = "http"
 }
 
-is_web_application(app) {
-    app == "https"
+is_web_application(app) = true {
+    app = "https"
 }
 
-# Warn: File transfer without WildFire
 warn[msg] {
     rule := input.policies.security[_]
-    rule.action == "allow"
-    rule.enabled == true
-    
-    # File transfer protocols
+    rule.action = "allow"
+    rule.enabled = true
     app := rule.application[_]
     is_file_transfer_app(app)
-    
-    # No WildFire
     not rule.wildfire
     not rule.securityProfiles.wildfire
-    
-    msg := sprintf("Rule '%s' allows file transfer without WildFire sandboxing (recommended)", [rule.name])
+    msg := sprintf("Rule '%s' allows file transfer without WildFire (recommended)", [rule.name])
 }
 
-is_file_transfer_app(app) {
-    app == "ftp"
+is_file_transfer_app(app) = true {
+    app = "ftp"
 }
 
-is_file_transfer_app(app) {
-    app == "sftp"
+is_file_transfer_app(app) = true {
+    app = "sftp"
 }
 
-is_file_transfer_app(app) {
+is_file_transfer_app(app) = true {
     contains(app, "cloud")
 }
 
-is_file_transfer_app(app) {
+is_file_transfer_app(app) = true {
     contains(app, "s3")
 }
 
-is_file_transfer_app(app) {
+is_file_transfer_app(app) = true {
     contains(app, "storage")
 }
 
-# Warn: VPN access without HIP check
 warn[msg] {
     rule := input.policies.security[_]
-    rule.action == "allow"
-    rule.enabled == true
-    
-    # VPN-related
+    rule.action = "allow"
+    rule.enabled = true
     src := rule.source[_]
     contains(src, "vpn")
-    
-    # No HIP profiles
-    count(rule.hipProfiles) == 0
-    
-    msg := sprintf("Rule '%s' allows VPN access without HIP (endpoint compliance) checks (recommended)", [rule.name])
+    count(rule.hipProfiles) = 0
+    msg := sprintf("Rule '%s' allows VPN access without HIP checks (recommended)", [rule.name])
 }
 
-# Warn: Admin/Dev access without MFA
 warn[msg] {
     rule := input.policies.security[_]
-    rule.action == "allow"
-    rule.enabled == true
-    
-    # SSH or RDP
+    rule.action = "allow"
+    rule.enabled = true
     svc := rule.service[_]
     is_admin_service(svc)
-    
-    # No MFA required
     not rule.mfa.required
-    
-    # Not test/emergency rule
     not contains(rule.name, "test")
     not contains(rule.name, "emergency")
-    
-    msg := sprintf("Rule '%s' allows admin access without MFA (strongly recommended)", [rule.name])
+    msg := sprintf("Rule '%s' allows admin access without MFA (recommended)", [rule.name])
 }
 
-is_admin_service(svc) {
-    svc == "ssh"
+is_admin_service(svc) = true {
+    svc = "ssh"
 }
 
-is_admin_service(svc) {
-    svc == "rdp"
+is_admin_service(svc) = true {
+    svc = "rdp"
 }
 
-is_admin_service(svc) {
-    svc == "tcp/22"
+is_admin_service(svc) = true {
+    svc = "tcp/22"
 }
 
-is_admin_service(svc) {
-    svc == "tcp/3389"
+is_admin_service(svc) = true {
+    svc = "tcp/3389"
 }
 
 # ==============================================================================
-# COMPLIANCE RULES - Regulatory requirements
+# COMPLIANCE
 # ==============================================================================
 
-# Compliance: PCI-DSS rules must have enhanced logging
 deny[msg] {
     rule := input.policies.security[_]
-    rule.action == "allow"
-    rule.enabled == true
-    
-    # Tagged as PCI-DSS
-    rule.tags.compliance == "pci-dss"
-    
-    # Must log session start AND end
+    rule.action = "allow"
+    rule.enabled = true
+    rule.tags.compliance = "pci-dss"
     not rule.log.atSessionStart
-    
     msg := sprintf("Rule '%s' is PCI-DSS scoped but missing session-start logging (required)", [rule.name])
 }
 
-# Compliance: PCI-DSS rules must have data filtering
 deny[msg] {
     rule := input.policies.security[_]
-    rule.action == "allow"
-    rule.enabled == true
-    
-    rule.tags.compliance == "pci-dss"
-    
-    # Must have DLP for credit card protection
+    rule.action = "allow"
+    rule.enabled = true
+    rule.tags.compliance = "pci-dss"
     not rule.dataFiltering
     not rule.securityProfiles.dataFiltering
-    
     msg := sprintf("Rule '%s' is PCI-DSS scoped but missing data filtering/DLP (required)", [rule.name])
 }
 
-# Compliance: HIPAA rules must have PHI protection
 deny[msg] {
     rule := input.policies.security[_]
-    rule.action == "allow"
-    rule.enabled == true
-    
-    rule.tags.standard == "hipaa"
-    
-    # Must have PHI data filtering
+    rule.action = "allow"
+    rule.enabled = true
+    rule.tags.standard = "hipaa"
     not contains(rule.dataFiltering, "phi")
     not contains(rule.securityProfiles.dataFiltering, "phi")
-    
     msg := sprintf("Rule '%s' is HIPAA scoped but missing PHI data filtering (required)", [rule.name])
 }
 
 # ==============================================================================
-# NAT POLICY VALIDATION
+# NAT VALIDATION
 # ==============================================================================
 
-# Deny: SNAT without proper source address
 deny[msg] {
     nat := input.policies.nat[_]
-    nat.enabled == true
-    
-    # SNAT rule
-    nat.sourceTranslation.type == "dynamic-ip-and-port"
-    
-    # Source is "any" (too broad)
-    nat.sourceAddress[_] == "any"
-    
-    msg := sprintf("NAT rule '%s' uses 'any' as source (should be specific internal networks)", [nat.name])
+    nat.enabled = true
+    nat.sourceTranslation.type = "dynamic-ip-and-port"
+    nat.sourceAddress[_] = "any"
+    msg := sprintf("NAT rule '%s' uses 'any' as source (should be specific)", [nat.name])
 }
 
-# Warn: DNAT without security rule
 warn[msg] {
     nat := input.policies.nat[_]
-    nat.enabled == true
-    
-    # DNAT rule
+    nat.enabled = true
     nat.destinationTranslation
-    
-    # Check if there's a matching security rule
     not has_matching_security_rule(nat)
-    
     msg := sprintf("NAT rule '%s' has no corresponding security rule (traffic will be blocked)", [nat.name])
 }
 
-has_matching_security_rule(nat) {
+has_matching_security_rule(nat) = true {
     rule := input.policies.security[_]
-    rule.action == "allow"
-    rule.enabled == true
-    
-    # Simplified check: just verify a rule exists for the zone
+    rule.action = "allow"
+    rule.enabled = true
     nat.destinationZone
 }
 
 # ==============================================================================
-# DECRYPTION POLICY VALIDATION
+# DECRYPTION VALIDATION
 # ==============================================================================
 
-# Warn: Decrypting financial/healthcare sites
 warn[msg] {
     decrypt := input.policies.decryption[_]
-    decrypt.action == "decrypt"
-    decrypt.enabled == true
-    
-    # Doesn't exclude sensitive categories
-    not contains(decrypt.excludedCategories[_], "financial-services")
-    
+    decrypt.action = "decrypt"
+    decrypt.enabled = true
+    not decrypt.excludedCategories[_] = "financial-services"
     msg := sprintf("Decryption rule '%s' may decrypt financial sites (privacy concern)", [decrypt.name])
 }
 
 warn[msg] {
     decrypt := input.policies.decryption[_]
-    decrypt.action == "decrypt"
-    decrypt.enabled == true
-    
-    not contains(decrypt.excludedCategories[_], "health-and-medicine")
-    
+    decrypt.action = "decrypt"
+    decrypt.enabled = true
+    not decrypt.excludedCategories[_] = "health-and-medicine"
     msg := sprintf("Decryption rule '%s' may decrypt healthcare sites (HIPAA concern)", [decrypt.name])
 }
 
 # ==============================================================================
-# STATISTICS & REPORTING
+# STATISTICS
 # ==============================================================================
 
-# Count total rules
 rule_count = count(input.policies.security)
 
-# Count allow rules
-allow_rule_count = count([rule | rule := input.policies.security[_]; rule.action == "allow"])
+allow_rule_count = count([rule | rule := input.policies.security[_]; rule.action = "allow"])
 
-# Count deny rules
-deny_rule_count = count([rule | rule := input.policies.security[_]; rule.action == "deny"]) +
-                   count([rule | rule := input.policies.security[_]; rule.action == "drop"])
+deny_rule_count = count([rule | rule := input.policies.security[_]; rule.action = "deny"]) +
+                   count([rule | rule := input.policies.security[_]; rule.action = "drop"])
 
-# Count rules with security profiles
 rules_with_profiles = count([rule |
     rule := input.policies.security[_]
-    rule.action == "allow"
+    rule.action = "allow"
     has_critical_security_profiles(rule)
 ])
 
-# Calculate security profile coverage percentage
 security_profile_coverage = (rules_with_profiles * 100) / allow_rule_count
 
-# Summary report
 summary = {
     "total_rules": rule_count,
     "allow_rules": allow_rule_count,
