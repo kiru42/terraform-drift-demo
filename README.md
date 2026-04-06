@@ -21,25 +21,25 @@ terraform-drift-demo/
 └── README.md
 ```
 
-## 🎯 Two Architectures Available
+## 🎯 Production-Ready Modular Architecture
 
-This demo includes **two Terraform architectures** to demonstrate different approaches:
+This demo uses a **modular Terraform architecture** with reusable components:
 
-### **1. Simple Demo (JSON-based)** - `main.tf`
-- ✅ Easy to understand
-- ✅ Self-contained
-- ✅ Good for learning Terraform basics
-- ❌ Not production-ready (2400+ line JSON file)
-
-### **2. Production-Ready (Modular)** - `main-modular.tf` ⭐
+### **Current: Production-Ready (Modular)** - `main.tf` ⭐
 - ✅ Reusable modules (`modules/security-rule/`, `modules/nat-rule/`)
 - ✅ YAML configuration (`firewall-rules.yaml`)
 - ✅ DRY (Don't Repeat Yourself) principles
 - ✅ Type-safe with Terraform validation
 - ✅ Git-friendly (clean diffs)
 - ✅ Scalable to hundreds of rules
+- ✅ Multi-environment support (prod/staging/dev)
 
-**👉 For production use, see [MODULAR-ARCHITECTURE.md](docs/MODULAR-ARCHITECTURE.md)**
+### **Legacy: Simple Demo (JSON-based)** - `main-legacy.tf.disabled`
+- ⚠️ Disabled by default (conflicts with modular architecture)
+- ℹ️ Available for reference (2400+ line JSON monolith)
+- 🔄 To use: `mv main.tf main-modular.tf && mv main-legacy.tf.disabled main.tf`
+
+**👉 For production patterns, see [MODULAR-ARCHITECTURE.md](docs/MODULAR-ARCHITECTURE.md)**
 
 ## 🎯 Key Features
 
