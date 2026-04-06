@@ -17,3 +17,4 @@ output "rule_id" {
   description = "Unique identifier for this rule"
   value       = null_resource.security_rule.id
 }
+

@@ -1,6 +1,6 @@
 /**
  * Security Rule Module
- * 
+ *
  * Creates a firewall security policy rule with optional security profiles.
  */
 
@@ -42,7 +42,7 @@ resource "null_resource" "security_rule" {
     negate_source   = var.negate.source
     negate_dest     = var.negate.destination
     hip_profiles    = jsonencode(var.hip_profiles)
-    
+
     # Security profiles
     antivirus      = try(local.security_profiles.antivirus, null)
     anti_spyware   = try(local.security_profiles.anti_spyware, null)
@@ -57,3 +57,4 @@ resource "null_resource" "security_rule" {
     command = "echo 'Security rule ${var.name} configured'"
   }
 }
+

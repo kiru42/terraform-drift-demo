@@ -87,16 +87,8 @@ jobs:
       - name: Terraform Format Check
         working-directory: ./terraform
         run: |
-          # Auto-format (don't fail on formatting issues)
-          terraform fmt -recursive
-          
-          # Check if any files were modified
-          if git diff --exit-code; then
-            echo "✅ Terraform code is properly formatted"
-          else
-            echo "⚠️ Some files were auto-formatted"
-            git diff --stat
-          fi
+          terraform fmt -check -recursive
+          echo "✅ Terraform code is properly formatted"
       
       - name: Validate Security Rule Module
         working-directory: ./terraform/modules/security-rule

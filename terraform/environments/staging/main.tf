@@ -1,12 +1,12 @@
 /**
  * Staging Environment
- * 
+ *
  * Mirrors production but with relaxed logging and test-friendly policies.
  */
 
 terraform {
   required_version = ">= 1.5.0"
-  
+
   backend "s3" {
     bucket         = "my-terraform-state-staging"
     key            = "firewall/staging/terraform.tfstate"
@@ -14,7 +14,7 @@ terraform {
     dynamodb_table = "terraform-locks-staging"
     encrypt        = true
   }
-  
+
   required_providers {
     null = {
       source  = "hashicorp/null"
@@ -25,7 +25,7 @@ terraform {
 
 locals {
   firewall_config = yamldecode(file("${path.module}/firewall-rules.yaml"))
-  
+
   security_rules_map = {
     for rule in local.firewall_config.security_rules :
     rule.name => rule
@@ -34,9 +34,9 @@ locals {
 
 module "security_rules" {
   source = "../../modules/security-rule"
-  
+
   for_each = local.security_rules_map
-  
+
   name                  = each.value.name
   source_addresses      = each.value.source
   destination_addresses = each.value.destination
@@ -46,13 +46,13 @@ module "security_rules" {
   enabled     = each.value.enabled
   description = lookup(each.value, "description", "")
   tags        = lookup(each.value, "tags", {})
-  
+
   log = {
     at_session_start = lookup(each.value.log, "at_session_start", false)
     at_session_end   = lookup(each.value.log, "at_session_end", true)
     log_forwarding   = lookup(each.value.log, "log_forwarding", "staging-syslog")
   }
-  
+
   security_profiles = lookup(each.value, "security_profiles", null) != null ? {
     antivirus      = lookup(each.value.security_profiles, "antivirus", null)
     anti_spyware   = lookup(each.value.security_profiles, "antiSpyware", null)
@@ -71,3 +71,4 @@ output "environment" {
 output "security_rules_count" {
   value = length(module.security_rules)
 }
+

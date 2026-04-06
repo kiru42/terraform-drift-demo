@@ -1,6 +1,6 @@
 terraform {
   required_version = ">= 1.0"
-  
+
   required_providers {
     null = {
       source  = "hashicorp/null"
@@ -42,21 +42,21 @@ resource "null_resource" "panorama_config" {
     command = <<-EOT
       #!/bin/bash
       set -e
-      
+
       echo "==================================="
       echo "DRIFT DETECTION"
       echo "==================================="
-      
+
       # Fetch current config from API
       CURRENT_CONFIG=$(curl -s ${var.api_endpoint}/config | jq -r '.data.policies')
       CURRENT_HASH=$(echo "$CURRENT_CONFIG" | md5sum | cut -d' ' -f1)
-      
+
       DESIRED_POLICIES=$(cat ${var.desired_config_file} | jq -r '.policies')
       DESIRED_HASH=$(echo "$DESIRED_POLICIES" | md5sum | cut -d' ' -f1)
-      
+
       echo "Desired config hash: $DESIRED_HASH"
       echo "Current config hash: $CURRENT_HASH"
-      
+
       if [ "$DESIRED_HASH" != "$CURRENT_HASH" ]; then
         echo "⚠️  DRIFT DETECTED!"
         echo "Configuration has diverged from desired state"
@@ -71,7 +71,7 @@ resource "null_resource" "panorama_config" {
         echo "✅ No drift detected"
       fi
     EOT
-    
+
     interpreter = ["bash", "-c"]
   }
 
@@ -85,20 +85,20 @@ resource "null_resource" "panorama_config" {
     command = <<-EOT
       #!/bin/bash
       set -e
-      
+
       echo ""
       echo "==================================="
       echo "APPLYING CONFIGURATION"
       echo "==================================="
-      
+
       RESPONSE=$(curl -X POST ${var.api_endpoint}/config \
         -H "Content-Type: application/json" \
         -d @${var.desired_config_file} \
         -s -w "\n%%{http_code}")
-      
+
       HTTP_CODE=$(echo "$RESPONSE" | tail -n1)
       BODY=$(echo "$RESPONSE" | sed '$d')
-      
+
       if [ "$HTTP_CODE" = "200" ]; then
         echo "✅ Configuration applied successfully"
         echo "$BODY" | jq '.'
@@ -108,7 +108,7 @@ resource "null_resource" "panorama_config" {
         exit 1
       fi
     EOT
-    
+
     interpreter = ["bash", "-c"]
   }
 }
@@ -128,3 +128,4 @@ output "api_endpoint" {
   description = "Mock Panorama API endpoint"
   value       = var.api_endpoint
 }
+

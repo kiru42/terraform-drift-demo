@@ -1,6 +1,6 @@
 /**
  * Terraform Drift Detection Demo - Modular Configuration
- * 
+ *
  * This is the production-ready refactored version using:
  * - Reusable modules (security-rule, nat-rule)
  * - YAML configuration (firewall-rules.yaml)
@@ -10,7 +10,7 @@
 
 terraform {
   required_version = ">= 1.5.0"
-  
+
   required_providers {
     null = {
       source  = "hashicorp/null"
@@ -22,7 +22,7 @@ terraform {
 # Load firewall rules from YAML
 locals {
   firewall_config = yamldecode(file("${path.module}/firewall-rules.yaml"))
-  
+
   # Convert list to map for for_each
   security_rules_map = {
     for rule in local.firewall_config.security_rules :
@@ -33,9 +33,9 @@ locals {
 # Security Rules using module
 module "security_rules" {
   source = "./modules/security-rule"
-  
+
   for_each = local.security_rules_map
-  
+
   name                  = each.value.name
   source_addresses      = each.value.source
   destination_addresses = each.value.destination
@@ -45,13 +45,13 @@ module "security_rules" {
   enabled     = each.value.enabled
   description = lookup(each.value, "description", "")
   tags        = lookup(each.value, "tags", {})
-  
+
   log = {
     at_session_start = lookup(each.value.log, "at_session_start", false)
     at_session_end   = lookup(each.value.log, "at_session_end", true)
     log_forwarding   = lookup(each.value.log, "log_forwarding", null)
   }
-  
+
   # Security profiles (if present)
   security_profiles = lookup(each.value, "security_profiles", null) != null ? {
     antivirus      = lookup(each.value.security_profiles, "antivirus", null)
@@ -84,3 +84,4 @@ output "deny_rules_count" {
   description = "Number of deny/drop rules"
   value       = length([for rule in local.security_rules_map : rule if contains(["deny", "drop"], rule.action)])
 }
+

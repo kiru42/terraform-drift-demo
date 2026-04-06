@@ -30,7 +30,7 @@ variable "application" {
 variable "action" {
   description = "Action to take (allow/deny/drop)"
   type        = string
-  
+
   validation {
     condition     = contains(["allow", "deny", "drop"], var.action)
     error_message = "Action must be one of: allow, deny, drop"
@@ -150,3 +150,4 @@ variable "security_profiles" {
   })
   default = null
 }
+

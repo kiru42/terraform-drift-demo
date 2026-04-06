@@ -1,6 +1,6 @@
 /**
  * NAT Rule Module
- * 
+ *
  * Creates a NAT policy rule (SNAT/DNAT).
  */
 
@@ -25,3 +25,4 @@ resource "null_resource" "nat_rule" {
     command = "echo 'NAT rule ${var.name} configured'"
   }
 }
+
