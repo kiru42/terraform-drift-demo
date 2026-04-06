@@ -104,21 +104,12 @@ jobs:
           terraform validate
           echo "✅ NAT rule module is valid"
       
-      - name: Validate Modular Configuration
+      - name: Validate Main Configuration
         working-directory: ./terraform
         run: |
-          # Temporarily rename main.tf to avoid conflicts
-          mv main.tf main-legacy.tf.bak
-          mv main-modular.tf main.tf
-          
           terraform init
           terraform validate
-          
-          # Restore original files
-          mv main.tf main-modular.tf
-          mv main-legacy.tf.bak main.tf
-          
-          echo "✅ Modular Terraform configuration is valid"
+          echo "✅ Main Terraform configuration is valid"
 
   detect-and-reconcile:
     name: Detect and Reconcile Drift
