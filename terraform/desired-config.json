@@ -38,7 +38,16 @@
           "destination": false
         },
         "disabled": false,
-        "hipProfiles": []
+        "hipProfiles": [],
+        "antivirus": "default-av-profile",
+        "antiSpyware": "default-anti-spyware",
+        "vulnerability": "default-vulnerability",
+        "urlFiltering": {
+          "profile": "default-url-filtering",
+          "override": false
+        },
+        "fileBlocking": "default-file-blocking",
+        "wildfire": "default"
       },
       {
         "name": "block_external_ssh",
@@ -210,7 +219,13 @@
         "qos": {
           "type": "ip-precedence",
           "value": 3
-        }
+        },
+        "antivirus": "strict-av",
+        "antiSpyware": "strict",
+        "vulnerability": "strict-vulnerability",
+        "fileBlocking": "strict-file-blocking",
+        "dataFiltering": "database-query-protection",
+        "wildfire": "default"
       },
       {
         "name": "time_restricted_guest_wifi",
@@ -267,7 +282,12 @@
             "phishing",
             "proxy-avoidance"
           ]
-        }
+        },
+        "antivirus": "guest-av-profile",
+        "antiSpyware": "default-anti-spyware",
+        "vulnerability": "default-vulnerability",
+        "fileBlocking": "guest-file-blocking",
+        "wildfire": "default"
       },
       {
         "name": "block_known_malicious_ips",
@@ -344,7 +364,9 @@
         "antivirus": "email-av-profile",
         "antiSpyware": "default-anti-spyware",
         "fileBlocking": "email-attachment-filter",
-        "dataFiltering": "email-dlp-profile"
+        "dataFiltering": "email-dlp-profile",
+        "vulnerability": "default-vulnerability",
+        "wildfire": "email-wildfire-analysis"
       },
       {
         "name": "allow_icmp_diagnostic",
@@ -473,7 +495,12 @@
         "mfa": {
           "required": true,
           "profile": "duo-security"
-        }
+        },
+        "antiSpyware": "strict",
+        "vulnerability": "strict-vulnerability",
+        "fileBlocking": "default-file-blocking",
+        "antivirus": "default-av-profile",
+        "wildfire": "default"
       },
       {
         "name": "emergency_disable_rule",
@@ -610,7 +637,12 @@
           "destination": false
         },
         "disabled": false,
-        "hipProfiles": []
+        "hipProfiles": [],
+        "antivirus": "cloud-av-profile",
+        "antiSpyware": "default-anti-spyware",
+        "vulnerability": "default-vulnerability",
+        "fileBlocking": "cloud-file-blocking",
+        "wildfire": "cloud-wildfire-analysis"
       },
       {
         "name": "allow_azure_storage",
@@ -646,7 +678,12 @@
           "destination": false
         },
         "disabled": false,
-        "hipProfiles": []
+        "hipProfiles": [],
+        "antivirus": "cloud-av-profile",
+        "antiSpyware": "default-anti-spyware",
+        "vulnerability": "default-vulnerability",
+        "fileBlocking": "cloud-file-blocking",
+        "wildfire": "cloud-wildfire-analysis"
       },
       {
         "name": "allow_gcp_storage",
@@ -681,7 +718,12 @@
           "destination": false
         },
         "disabled": false,
-        "hipProfiles": []
+        "hipProfiles": [],
+        "antivirus": "cloud-av-profile",
+        "antiSpyware": "default-anti-spyware",
+        "vulnerability": "default-vulnerability",
+        "fileBlocking": "cloud-file-blocking",
+        "wildfire": "cloud-wildfire-analysis"
       },
       {
         "name": "allow_office365_approved",
@@ -719,7 +761,17 @@
           "destination": false
         },
         "disabled": false,
-        "hipProfiles": []
+        "hipProfiles": [],
+        "antivirus": "saas-av-profile",
+        "antiSpyware": "saas-anti-spyware",
+        "vulnerability": "default-vulnerability",
+        "urlFiltering": {
+          "profile": "saas-url-filtering",
+          "override": false
+        },
+        "fileBlocking": "saas-file-blocking",
+        "dataFiltering": "saas-dlp-profile",
+        "wildfire": "saas-wildfire"
       },
       {
         "name": "block_personal_cloud_storage",
@@ -838,7 +890,12 @@
         "disabled": false,
         "hipProfiles": [
           "partner-security-baseline"
-        ]
+        ],
+        "antivirus": "strict-av",
+        "antiSpyware": "strict",
+        "vulnerability": "strict-vulnerability",
+        "fileBlocking": "strict-file-blocking",
+        "wildfire": "default"
       },
       {
         "name": "allow_k8s_pod_to_pod",
@@ -882,7 +939,12 @@
           "destination": false
         },
         "disabled": false,
-        "hipProfiles": []
+        "hipProfiles": [],
+        "antivirus": "container-av-profile",
+        "antiSpyware": "default-anti-spyware",
+        "vulnerability": "container-vulnerability-protection",
+        "fileBlocking": "default-file-blocking",
+        "wildfire": "default"
       },
       {
         "name": "allow_k8s_to_external_apis",
@@ -920,7 +982,12 @@
           "destination": false
         },
         "disabled": false,
-        "hipProfiles": []
+        "hipProfiles": [],
+        "antivirus": "container-av-profile",
+        "antiSpyware": "default-anti-spyware",
+        "vulnerability": "default-vulnerability",
+        "fileBlocking": "default-file-blocking",
+        "wildfire": "default"
       },
       {
         "name": "force_dns_to_port_53",
@@ -1035,7 +1102,10 @@
         "securityProfiles": {
           "dataFiltering": "phi-protection",
           "antivirus": "strict-av",
-          "fileBlocking": "strict-file-blocking"
+          "fileBlocking": "strict-file-blocking",
+          "antiSpyware": "strict",
+          "vulnerability": "strict-vulnerability",
+          "wildfire": "default"
         },
         "schedule": null,
         "negate": {
