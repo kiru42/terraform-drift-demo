@@ -8,26 +8,556 @@
     "security": [
       {
         "name": "allow_internal_web",
-        "source": ["10.0.0.0/8"],
+        "source": ["10.0.0.0/8", "172.16.0.0/12"],
         "destination": ["any"],
         "service": ["http", "https"],
         "action": "allow",
         "enabled": true,
-        "description": "Allow internal networks to access web"
+        "description": "Allow internal networks to access web services",
+        "tags": {
+          "category": "internet-access",
+          "owner": "network-team",
+          "compliance": "standard"
+        },
+        "log": {
+          "atSessionStart": true,
+          "atSessionEnd": true,
+          "logForwarding": "syslog-server"
+        },
+        "schedule": null,
+        "negate": {
+          "source": false,
+          "destination": false
+        },
+        "disabled": false,
+        "hipProfiles": []
       },
       {
         "name": "block_external_ssh",
         "source": ["any"],
-        "destination": ["10.0.0.0/8"],
-        "service": ["ssh"],
+        "destination": ["10.0.0.0/8", "172.16.0.0/12", "192.168.0.0/16"],
+        "service": ["ssh", "tcp/2222"],
         "action": "drop",
         "enabled": true,
-        "description": "Block external SSH to internal networks"
+        "description": "Block external SSH to internal networks (security hardening)",
+        "tags": {
+          "category": "security",
+          "owner": "security-team",
+          "compliance": "critical",
+          "threat-prevention": "brute-force"
+        },
+        "log": {
+          "atSessionStart": false,
+          "atSessionEnd": true,
+          "logForwarding": "security-siem"
+        },
+        "schedule": null,
+        "negate": {
+          "source": false,
+          "destination": false
+        },
+        "disabled": false,
+        "hipProfiles": []
+      },
+      {
+        "name": "allow_corporate_vpn",
+        "source": ["vpn-users", "vpn-gateway-pool"],
+        "destination": ["corporate-network", "10.50.0.0/16"],
+        "service": ["application-default", "tcp/443", "udp/1194"],
+        "action": "allow",
+        "enabled": true,
+        "description": "Allow VPN users to access corporate resources",
+        "tags": {
+          "category": "remote-access",
+          "owner": "it-team",
+          "compliance": "standard"
+        },
+        "log": {
+          "atSessionStart": true,
+          "atSessionEnd": true,
+          "logForwarding": "vpn-logs"
+        },
+        "schedule": null,
+        "negate": {
+          "source": false,
+          "destination": false
+        },
+        "disabled": false,
+        "hipProfiles": ["corporate-endpoint-security"],
+        "urlFiltering": {
+          "profile": "strict-browsing",
+          "override": false
+        },
+        "antivirus": "default-av-profile",
+        "antiSpyware": "strict-anti-spyware",
+        "vulnerability": "strict-vulnerability",
+        "fileBlocking": "sensitive-data-profile",
+        "dataFiltering": "pci-dss-data-filter",
+        "wildfire": "wildfire-analysis"
+      },
+      {
+        "name": "deny_p2p_protocols",
+        "source": ["any"],
+        "destination": ["any"],
+        "service": ["bittorrent", "p2p-applications"],
+        "application": ["bittorrent", "torrent", "utorrent", "emule", "kazaa"],
+        "action": "deny",
+        "enabled": true,
+        "description": "Block peer-to-peer file sharing protocols (bandwidth + legal risk)",
+        "tags": {
+          "category": "bandwidth-management",
+          "owner": "network-team",
+          "compliance": "policy-enforcement"
+        },
+        "log": {
+          "atSessionStart": true,
+          "atSessionEnd": true,
+          "logForwarding": "bandwidth-logs"
+        },
+        "schedule": null,
+        "negate": {
+          "source": false,
+          "destination": false
+        },
+        "disabled": false,
+        "hipProfiles": []
+      },
+      {
+        "name": "allow_dmz_to_database",
+        "source": ["dmz-web-servers", "10.100.10.0/24"],
+        "destination": ["database-cluster", "10.200.20.0/24"],
+        "service": ["mysql", "tcp/3306", "postgresql", "tcp/5432"],
+        "action": "allow",
+        "enabled": true,
+        "description": "Allow DMZ web servers to access backend database cluster",
+        "tags": {
+          "category": "application-tier",
+          "owner": "devops-team",
+          "compliance": "segmentation",
+          "app-id": "ecommerce-platform"
+        },
+        "log": {
+          "atSessionStart": false,
+          "atSessionEnd": true,
+          "logForwarding": "app-logs"
+        },
+        "schedule": null,
+        "negate": {
+          "source": false,
+          "destination": false
+        },
+        "disabled": false,
+        "hipProfiles": [],
+        "sourceUser": ["any"],
+        "destinationUser": ["any"],
+        "qos": {
+          "type": "ip-precedence",
+          "value": 3
+        }
+      },
+      {
+        "name": "time_restricted_guest_wifi",
+        "source": ["guest-wifi-zone", "192.168.99.0/24"],
+        "destination": ["any"],
+        "service": ["http", "https", "dns"],
+        "action": "allow",
+        "enabled": true,
+        "description": "Guest WiFi access restricted to business hours (8h-18h weekdays)",
+        "tags": {
+          "category": "guest-access",
+          "owner": "it-team",
+          "compliance": "temporary-access"
+        },
+        "log": {
+          "atSessionStart": true,
+          "atSessionEnd": true,
+          "logForwarding": "guest-logs"
+        },
+        "schedule": {
+          "name": "business-hours",
+          "type": "recurring",
+          "days": ["monday", "tuesday", "wednesday", "thursday", "friday"],
+          "timeRange": "08:00-18:00"
+        },
+        "negate": {
+          "source": false,
+          "destination": false
+        },
+        "disabled": false,
+        "hipProfiles": [],
+        "urlFiltering": {
+          "profile": "guest-safe-browsing",
+          "override": false,
+          "blockedCategories": [
+            "adult",
+            "gambling",
+            "malware",
+            "phishing",
+            "proxy-avoidance"
+          ]
+        }
+      },
+      {
+        "name": "block_known_malicious_ips",
+        "source": ["external-threat-feed", "threat-intel-list"],
+        "destination": ["any"],
+        "service": ["any"],
+        "action": "drop",
+        "enabled": true,
+        "description": "Drop traffic from known malicious IPs (threat intelligence feeds)",
+        "tags": {
+          "category": "threat-prevention",
+          "owner": "security-team",
+          "compliance": "critical",
+          "auto-updated": "true"
+        },
+        "log": {
+          "atSessionStart": true,
+          "atSessionEnd": true,
+          "logForwarding": "security-siem",
+          "logType": "threat"
+        },
+        "schedule": null,
+        "negate": {
+          "source": false,
+          "destination": false
+        },
+        "disabled": false,
+        "hipProfiles": []
+      },
+      {
+        "name": "allow_outbound_email",
+        "source": ["mail-servers", "10.20.30.0/24"],
+        "destination": ["any"],
+        "service": ["smtp", "tcp/25", "smtps", "tcp/465", "submission", "tcp/587"],
+        "action": "allow",
+        "enabled": true,
+        "description": "Allow mail servers to send outbound email",
+        "tags": {
+          "category": "mail-infrastructure",
+          "owner": "it-team",
+          "compliance": "standard"
+        },
+        "log": {
+          "atSessionStart": false,
+          "atSessionEnd": true,
+          "logForwarding": "mail-logs"
+        },
+        "schedule": null,
+        "negate": {
+          "source": false,
+          "destination": false
+        },
+        "disabled": false,
+        "hipProfiles": [],
+        "antivirus": "email-av-profile",
+        "antiSpyware": "default-anti-spyware",
+        "fileBlocking": "email-attachment-filter",
+        "dataFiltering": "email-dlp-profile"
+      },
+      {
+        "name": "allow_icmp_diagnostic",
+        "source": ["monitoring-servers", "10.10.10.0/24"],
+        "destination": ["any"],
+        "service": ["icmp", "ping", "traceroute"],
+        "action": "allow",
+        "enabled": true,
+        "description": "Allow ICMP from monitoring servers for network diagnostics",
+        "tags": {
+          "category": "network-operations",
+          "owner": "network-team",
+          "compliance": "standard"
+        },
+        "log": {
+          "atSessionStart": false,
+          "atSessionEnd": false,
+          "logForwarding": null
+        },
+        "schedule": null,
+        "negate": {
+          "source": false,
+          "destination": false
+        },
+        "disabled": false,
+        "hipProfiles": [],
+        "rateLimit": {
+          "enabled": true,
+          "packetsPerSecond": 100
+        }
+      },
+      {
+        "name": "deny_risky_applications",
+        "source": ["any"],
+        "destination": ["any"],
+        "service": ["application-default"],
+        "application": [
+          "teamviewer",
+          "anydesk",
+          "logmein",
+          "remote-desktop-sharing",
+          "tor",
+          "proxy-anonymizers"
+        ],
+        "action": "deny",
+        "enabled": true,
+        "description": "Block risky remote access and anonymization applications",
+        "tags": {
+          "category": "security",
+          "owner": "security-team",
+          "compliance": "critical",
+          "risk-level": "high"
+        },
+        "log": {
+          "atSessionStart": true,
+          "atSessionEnd": true,
+          "logForwarding": "security-siem",
+          "logType": "traffic"
+        },
+        "schedule": null,
+        "negate": {
+          "source": false,
+          "destination": false
+        },
+        "disabled": false,
+        "hipProfiles": []
+      },
+      {
+        "name": "allow_dev_team_ssh_managed",
+        "source": ["dev-team-users"],
+        "destination": ["development-servers", "10.30.0.0/16"],
+        "service": ["ssh", "tcp/22"],
+        "action": "allow",
+        "enabled": true,
+        "description": "Allow dev team SSH access to development environment (user-based)",
+        "tags": {
+          "category": "developer-access",
+          "owner": "devops-team",
+          "compliance": "identity-aware",
+          "environment": "development"
+        },
+        "log": {
+          "atSessionStart": true,
+          "atSessionEnd": true,
+          "logForwarding": "audit-logs"
+        },
+        "schedule": null,
+        "negate": {
+          "source": false,
+          "destination": false
+        },
+        "disabled": false,
+        "hipProfiles": ["dev-workstation-compliance"],
+        "sourceUser": ["domain\\dev-team", "LDAP-group://developers"],
+        "destinationUser": ["any"],
+        "mfa": {
+          "required": true,
+          "profile": "duo-security"
+        }
+      },
+      {
+        "name": "emergency_disable_rule",
+        "source": ["any"],
+        "destination": ["any"],
+        "service": ["any"],
+        "action": "allow",
+        "enabled": false,
+        "description": "Emergency allow-all rule (DISABLED by default, activate only during incident response)",
+        "tags": {
+          "category": "emergency",
+          "owner": "security-team",
+          "compliance": "incident-response-only",
+          "approval-required": "ciso"
+        },
+        "log": {
+          "atSessionStart": true,
+          "atSessionEnd": true,
+          "logForwarding": "emergency-logs",
+          "logType": "traffic"
+        },
+        "schedule": null,
+        "negate": {
+          "source": false,
+          "destination": false
+        },
+        "disabled": true,
+        "hipProfiles": []
       }
     ]
   },
   "metadata": {
-    "lastModified": "2024-01-15T00:00:00Z",
-    "modifiedBy": "terraform"
+    "lastModified": "2026-04-06T15:55:00Z",
+    "modifiedBy": "terraform",
+    "version": "1.0.0",
+    "changeControl": {
+      "ticketId": "CHG-2024-001",
+      "approver": "security-team@company.com",
+      "approvalDate": "2026-04-06"
+    },
+    "documentation": "https://wiki.company.com/firewall-policies"
+  },
+  "globalSettings": {
+    "defaultAction": "deny",
+    "logAllDenied": true,
+    "sessionTimeout": 3600,
+    "tcpTimeout": 3600,
+    "udpTimeout": 30,
+    "maxSessionsPerHost": 10000
+  },
+  "serviceDefinitions": {
+    "custom-services": [
+      {
+        "name": "custom-app-port",
+        "protocol": "tcp",
+        "port": "8080-8090",
+        "description": "Custom application port range"
+      },
+      {
+        "name": "voip-sip",
+        "protocol": "udp",
+        "port": "5060-5061",
+        "description": "VoIP SIP signaling"
+      }
+    ]
+  },
+  "addressObjects": {
+    "definitions": [
+      {
+        "name": "vpn-users",
+        "type": "ip-netmask",
+        "value": "192.168.50.0/24",
+        "description": "VPN user pool"
+      },
+      {
+        "name": "dmz-web-servers",
+        "type": "ip-range",
+        "value": "10.100.10.10-10.100.10.20",
+        "description": "DMZ web server farm"
+      },
+      {
+        "name": "database-cluster",
+        "type": "fqdn",
+        "value": "db-cluster.internal.company.com",
+        "description": "Database cluster DNS name"
+      }
+    ]
+  },
+  "applicationFilters": {
+    "custom-filters": [
+      {
+        "name": "social-media",
+        "applications": ["facebook", "twitter", "instagram", "linkedin"],
+        "category": "social-networking"
+      },
+      {
+        "name": "file-sharing",
+        "applications": ["dropbox", "google-drive", "onedrive", "box"],
+        "category": "collaboration"
+      }
+    ]
+  },
+  "securityProfiles": {
+    "antivirus": [
+      {
+        "name": "default-av-profile",
+        "decoders": ["http", "smtp", "pop3", "imap", "ftp"],
+        "action": "reset-both"
+      }
+    ],
+    "antiSpyware": [
+      {
+        "name": "strict-anti-spyware",
+        "threatException": [],
+        "botnetDomains": {
+          "lists": ["panw-known-malicious-domains"],
+          "action": "block"
+        }
+      }
+    ],
+    "vulnerability": [
+      {
+        "name": "strict-vulnerability",
+        "criticalSeverity": "reset-both",
+        "highSeverity": "reset-both",
+        "mediumSeverity": "alert",
+        "lowSeverity": "default"
+      }
+    ],
+    "urlFiltering": [
+      {
+        "name": "strict-browsing",
+        "blockedCategories": [
+          "adult",
+          "gambling",
+          "malware",
+          "phishing",
+          "proxy-avoidance",
+          "hacking",
+          "command-and-control"
+        ],
+        "action": "block",
+        "logContainer": true
+      }
+    ],
+    "fileBlocking": [
+      {
+        "name": "sensitive-data-profile",
+        "blockedFileTypes": ["pe", "exe", "dll", "bat", "cmd", "vbs", "ps1"],
+        "action": "block",
+        "direction": "both"
+      }
+    ],
+    "dataFiltering": [
+      {
+        "name": "pci-dss-data-filter",
+        "dataPatterns": ["credit-card-numbers", "ssn", "iban"],
+        "action": "alert",
+        "logSeverity": "critical"
+      }
+    ],
+    "wildfire": [
+      {
+        "name": "wildfire-analysis",
+        "fileSize": 10,
+        "forwardMethod": "cloud",
+        "schedule": "real-time"
+      }
+    ]
+  },
+  "comments": {
+    "schema-version": "This is an exhaustive example of Panorama firewall configuration",
+    "key-concepts": {
+      "security-rules": "Order matters! Rules are evaluated top-to-bottom",
+      "action-types": {
+        "allow": "Permit traffic and continue inspection",
+        "deny": "Block traffic and send TCP reset or ICMP unreachable",
+        "drop": "Silently discard traffic (no notification to source)"
+      },
+      "logging": {
+        "atSessionStart": "Log when connection begins",
+        "atSessionEnd": "Log when connection closes (recommended)",
+        "logForwarding": "Name of log forwarding profile"
+      },
+      "advanced-features": {
+        "user-id": "Identity-based policies (sourceUser, destinationUser)",
+        "hip-profiles": "Host Information Profile (endpoint compliance)",
+        "qos": "Quality of Service (traffic prioritization)",
+        "schedule": "Time-based rules (business hours, maintenance windows)",
+        "application-control": "Layer 7 application identification",
+        "url-filtering": "Category-based web filtering",
+        "threat-prevention": "Antivirus, anti-spyware, vulnerability protection",
+        "wildfire": "Advanced malware analysis (sandbox)",
+        "data-filtering": "DLP (Data Loss Prevention)"
+      },
+      "best-practices": {
+        "naming": "Use descriptive rule names (verb_object_context)",
+        "description": "Always document the business purpose",
+        "tags": "Categorize for reporting and compliance",
+        "logging": "Enable logging for security rules, minimize for high-volume traffic",
+        "disabled-rules": "Keep disabled rules for emergency scenarios",
+        "review-schedule": "Review rules quarterly, remove unused"
+      }
+    },
+    "rule-ordering": "Most specific rules first, default deny last",
+    "testing": "Always test in non-production before deploying to production"
   }
 }
