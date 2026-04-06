@@ -135,6 +135,48 @@ curl -X POST http://localhost:3000/drift \
   -d '{"rule": "allow_rogue_traffic", "action": "allow"}'
 ```
 
+## 🎪 Demo Drift Scenarios
+
+The mock API includes **intentional drift** for demonstration purposes:
+
+### Drift Scenario 1: Manual Rule Addition
+```json
+{
+  "name": "demo_drift_manual_change",
+  "source": ["192.168.100.0/24"],
+  "destination": ["any"],
+  "service": ["any"],
+  "action": "allow",
+  "description": "Manually added rule - not in Terraform"
+}
+```
+**Impact:** Terraform will detect this extra rule and remove it during reconciliation.
+
+### Drift Scenario 2: Rule State Change
+- Rule `allow_internal_web` is **disabled** in mock API
+- Terraform expects it to be **enabled**
+- **Impact:** Drift detection will catch this and re-enable the rule
+
+### Testing Drift Detection
+
+```bash
+# 1. Check current drift
+cd terraform
+terraform plan
+
+# Expected output:
+# Plan: 1 to add, 1 to change, 1 to destroy
+
+# 2. Run drift detection script
+cd ..
+./scripts/detect-drift.sh
+
+# 3. Auto-reconcile (fix drift)
+./scripts/reconcile-config.sh
+```
+
+After reconciliation, `terraform plan` should show **no changes**.
+
 ## 🛡️ Policy as Code Validation
 
 Before every `terraform apply`, policies are validated:
