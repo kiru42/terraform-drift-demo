@@ -13,35 +13,35 @@ locals {
   security_profiles = coalesce(
     var.security_profiles,
     var.antivirus != null ? {
-      antivirus       = var.antivirus
-      anti_spyware    = var.anti_spyware
-      vulnerability   = var.vulnerability
-      url_filtering   = var.url_filtering
-      file_blocking   = var.file_blocking
-      wildfire        = var.wildfire
-      data_filtering  = var.data_filtering
+      antivirus      = var.antivirus
+      anti_spyware   = var.anti_spyware
+      vulnerability  = var.vulnerability
+      url_filtering  = var.url_filtering
+      file_blocking  = var.file_blocking
+      wildfire       = var.wildfire
+      data_filtering = var.data_filtering
     } : null
   )
 }
 
 resource "null_resource" "security_rule" {
   triggers = {
-    name            = var.name
-    source          = jsonencode(var.source_addresses)
-    destination     = jsonencode(var.destination_addresses)
-    service         = jsonencode(var.service)
-    application     = jsonencode(var.application)
-    action          = var.action
-    enabled         = var.enabled
-    description     = var.description
-    tags            = jsonencode(var.tags)
-    log_start       = var.log.at_session_start
-    log_end         = var.log.at_session_end
-    log_forwarding  = var.log.log_forwarding
-    schedule        = var.schedule
-    negate_source   = var.negate.source
-    negate_dest     = var.negate.destination
-    hip_profiles    = jsonencode(var.hip_profiles)
+    name           = var.name
+    source         = jsonencode(var.source_addresses)
+    destination    = jsonencode(var.destination_addresses)
+    service        = jsonencode(var.service)
+    application    = jsonencode(var.application)
+    action         = var.action
+    enabled        = var.enabled
+    description    = var.description
+    tags           = jsonencode(var.tags)
+    log_start      = var.log.at_session_start
+    log_end        = var.log.at_session_end
+    log_forwarding = var.log.log_forwarding
+    schedule       = var.schedule
+    negate_source  = var.negate.source
+    negate_dest    = var.negate.destination
+    hip_profiles   = jsonencode(var.hip_profiles)
 
     # Security profiles
     antivirus      = try(local.security_profiles.antivirus, null)

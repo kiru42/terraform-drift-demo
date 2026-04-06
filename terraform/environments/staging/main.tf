@@ -40,12 +40,12 @@ module "security_rules" {
   name                  = each.value.name
   source_addresses      = each.value.source
   destination_addresses = each.value.destination
-  service     = each.value.service
-  application = lookup(each.value, "application", ["any"])
-  action      = each.value.action
-  enabled     = each.value.enabled
-  description = lookup(each.value, "description", "")
-  tags        = lookup(each.value, "tags", {})
+  service               = each.value.service
+  application           = lookup(each.value, "application", ["any"])
+  action                = each.value.action
+  enabled               = each.value.enabled
+  description           = lookup(each.value, "description", "")
+  tags                  = lookup(each.value, "tags", {})
 
   log = {
     at_session_start = lookup(each.value.log, "at_session_start", false)
