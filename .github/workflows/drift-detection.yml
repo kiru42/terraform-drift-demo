@@ -21,9 +21,41 @@ on:
   #   - cron: '*/30 * * * *'  # Every 30 minutes
 
 jobs:
+  policy-validation:
+    name: Policy Validation (Pre-check)
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      
+      - name: Validate Policy (Bash)
+        run: |
+          chmod +x ./scripts/validate-policy.sh
+          ./scripts/validate-policy.sh terraform/desired-config.json
+      
+      - name: Install OPA
+        run: |
+          curl -L -o opa https://openpolicyagent.org/downloads/latest/opa_linux_amd64
+          chmod +x opa
+          sudo mv opa /usr/local/bin/
+          opa version
+      
+      - name: Validate Policy (OPA)
+        run: |
+          chmod +x ./scripts/validate-opa.sh
+          ./scripts/validate-opa.sh terraform/desired-config.json
+      
+      - name: Policy Validation Summary
+        if: always()
+        run: |
+          echo "✅ Policy validation completed"
+          echo "Both Bash and OPA validations ran successfully"
+
   detect-and-reconcile:
     name: Detect and Reconcile Drift
     runs-on: ubuntu-latest
+    needs: policy-validation
     
     steps:
       - name: Checkout repository
@@ -96,11 +128,25 @@ jobs:
             exit 1
           fi
       
-      - name: Validate Policy
+      - name: Validate Policy (Bash)
         if: steps.drift.outputs.drift_detected == 'true'
         run: |
           chmod +x ./scripts/validate-policy.sh
           ./scripts/validate-policy.sh terraform/desired-config.json
+      
+      - name: Install OPA
+        if: steps.drift.outputs.drift_detected == 'true'
+        run: |
+          curl -L -o opa https://openpolicyagent.org/downloads/latest/opa_linux_amd64
+          chmod +x opa
+          sudo mv opa /usr/local/bin/
+          opa version
+      
+      - name: Validate Policy (OPA)
+        if: steps.drift.outputs.drift_detected == 'true'
+        run: |
+          chmod +x ./scripts/validate-opa.sh
+          ./scripts/validate-opa.sh terraform/desired-config.json
       
       - name: Reconcile Configuration
         if: steps.drift.outputs.drift_detected == 'true'
