@@ -1,6 +1,14 @@
 name: Panorama Drift Detection
 
 on:
+  # Run on push to main
+  push:
+    branches: [main]
+  
+  # Run on pull requests
+  pull_request:
+    branches: [main]
+  
   # Manual trigger
   workflow_dispatch:
   
