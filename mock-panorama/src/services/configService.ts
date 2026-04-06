@@ -1,6 +1,6 @@
 import fs from 'fs/promises';
 import path from 'path';
-import { FirewallConfig, PolicyRule, DriftEvent } from '../types/config';
+import { FirewallConfig, DriftEvent } from '../types/config';
 import logger from '../utils/logger';
 
 const DATA_DIR = path.join(__dirname, '../../data');

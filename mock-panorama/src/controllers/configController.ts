@@ -7,7 +7,7 @@ import logger from '../utils/logger';
  * Get current firewall configuration
  */
 export const getConfig = async (
-  req: Request,
+  _req: Request,
   res: Response<ApiResponse<FirewallConfig>>
 ): Promise<void> => {
   try {
@@ -110,7 +110,7 @@ export const injectDrift = async (
  * Reset configuration to default
  */
 export const resetConfig = async (
-  req: Request,
+  _req: Request,
   res: Response<ApiResponse>
 ): Promise<void> => {
   try {
@@ -137,7 +137,7 @@ export const resetConfig = async (
 /**
  * Health check endpoint
  */
-export const healthCheck = (req: Request, res: Response): void => {
+export const healthCheck = (_req: Request, res: Response): void => {
   res.json({
     success: true,
     message: 'Mock Panorama API is healthy',
