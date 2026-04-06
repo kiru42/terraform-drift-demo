@@ -528,6 +528,717 @@
           "category": "test",
           "owner": "devops-team"
         }
+      },
+      {
+        "name": "allow_trust_to_dmz_https",
+        "source": [
+          "10.0.0.0/8",
+          "internal-users"
+        ],
+        "destination": [
+          "dmz-web-servers",
+          "10.100.10.0/24"
+        ],
+        "service": [
+          "https",
+          "tcp/443"
+        ],
+        "application": [
+          "web-browsing",
+          "ssl"
+        ],
+        "action": "allow",
+        "enabled": true,
+        "description": "East-West traffic: Internal users to DMZ web servers (micro-segmentation)",
+        "tags": {
+          "category": "east-west",
+          "zone": "trust-to-dmz",
+          "compliance": "pci-dss"
+        },
+        "log": {
+          "atSessionStart": true,
+          "atSessionEnd": true,
+          "logForwarding": "siem-compliance"
+        },
+        "securityProfiles": {
+          "antivirus": "strict-av",
+          "antiSpyware": "strict",
+          "vulnerability": "strict",
+          "urlFiltering": "default",
+          "fileBlocking": "strict-file-blocking",
+          "wildfire": "default"
+        },
+        "schedule": null,
+        "negate": {
+          "source": false,
+          "destination": false
+        },
+        "disabled": false,
+        "hipProfiles": []
+      },
+      {
+        "name": "allow_aws_s3_access",
+        "source": [
+          "10.0.0.0/8",
+          "app-servers"
+        ],
+        "destination": [
+          "aws-s3-prefix-list"
+        ],
+        "service": [
+          "application-default"
+        ],
+        "application": [
+          "amazon-s3"
+        ],
+        "action": "allow",
+        "enabled": true,
+        "description": "Cloud integration: Allow access to AWS S3 buckets",
+        "tags": {
+          "category": "cloud-integration",
+          "cloud-provider": "aws",
+          "service": "s3"
+        },
+        "log": {
+          "atSessionStart": false,
+          "atSessionEnd": true,
+          "logForwarding": "cloud-access-logs"
+        },
+        "schedule": null,
+        "negate": {
+          "source": false,
+          "destination": false
+        },
+        "disabled": false,
+        "hipProfiles": []
+      },
+      {
+        "name": "allow_azure_storage",
+        "source": [
+          "10.0.0.0/8",
+          "app-servers"
+        ],
+        "destination": [
+          "azure-storage-fqdn"
+        ],
+        "service": [
+          "application-default"
+        ],
+        "application": [
+          "ms-azure-storage"
+        ],
+        "action": "allow",
+        "enabled": true,
+        "description": "Cloud integration: Allow access to Azure Blob Storage",
+        "tags": {
+          "category": "cloud-integration",
+          "cloud-provider": "azure",
+          "service": "blob-storage"
+        },
+        "log": {
+          "atSessionStart": false,
+          "atSessionEnd": true,
+          "logForwarding": "cloud-access-logs"
+        },
+        "schedule": null,
+        "negate": {
+          "source": false,
+          "destination": false
+        },
+        "disabled": false,
+        "hipProfiles": []
+      },
+      {
+        "name": "allow_gcp_storage",
+        "source": [
+          "10.0.0.0/8"
+        ],
+        "destination": [
+          "gcp-storage-fqdn"
+        ],
+        "service": [
+          "application-default"
+        ],
+        "application": [
+          "google-cloud-storage"
+        ],
+        "action": "allow",
+        "enabled": true,
+        "description": "Cloud integration: Allow access to Google Cloud Storage",
+        "tags": {
+          "category": "cloud-integration",
+          "cloud-provider": "gcp",
+          "service": "cloud-storage"
+        },
+        "log": {
+          "atSessionStart": false,
+          "atSessionEnd": true,
+          "logForwarding": "cloud-access-logs"
+        },
+        "schedule": null,
+        "negate": {
+          "source": false,
+          "destination": false
+        },
+        "disabled": false,
+        "hipProfiles": []
+      },
+      {
+        "name": "allow_office365_approved",
+        "source": [
+          "corporate-users",
+          "10.0.0.0/8"
+        ],
+        "destination": [
+          "any"
+        ],
+        "service": [
+          "application-default"
+        ],
+        "application": [
+          "office365-enterprise-access",
+          "ms-onedrive-enterprise",
+          "ms-teams"
+        ],
+        "action": "allow",
+        "enabled": true,
+        "description": "SaaS governance: Allow approved Office 365 services",
+        "tags": {
+          "category": "saas-governance",
+          "approved": "yes",
+          "vendor": "microsoft"
+        },
+        "log": {
+          "atSessionStart": false,
+          "atSessionEnd": true,
+          "logForwarding": "saas-logs"
+        },
+        "schedule": null,
+        "negate": {
+          "source": false,
+          "destination": false
+        },
+        "disabled": false,
+        "hipProfiles": []
+      },
+      {
+        "name": "block_personal_cloud_storage",
+        "source": [
+          "corporate-users",
+          "10.0.0.0/8"
+        ],
+        "destination": [
+          "any"
+        ],
+        "service": [
+          "application-default"
+        ],
+        "application": [
+          "dropbox-base",
+          "google-drive-base",
+          "box-base",
+          "icloud-base"
+        ],
+        "action": "deny",
+        "enabled": true,
+        "description": "SaaS governance: Block unauthorized personal cloud storage (shadow IT)",
+        "tags": {
+          "category": "saas-governance",
+          "shadow-it": "blocked",
+          "compliance": "data-loss-prevention"
+        },
+        "log": {
+          "atSessionStart": true,
+          "atSessionEnd": true,
+          "logForwarding": "security-incidents"
+        },
+        "schedule": null,
+        "negate": {
+          "source": false,
+          "destination": false
+        },
+        "disabled": false,
+        "hipProfiles": []
+      },
+      {
+        "name": "block_high_risk_countries",
+        "source": [
+          "high-risk-geoip"
+        ],
+        "destination": [
+          "corporate-network",
+          "10.0.0.0/8",
+          "dmz-servers"
+        ],
+        "service": [
+          "any"
+        ],
+        "action": "drop",
+        "enabled": true,
+        "description": "Geolocation blocking: Drop traffic from high-risk countries (CN, RU, KP, IR, SY)",
+        "sourceRegions": [
+          "CN",
+          "RU",
+          "KP",
+          "IR",
+          "SY"
+        ],
+        "tags": {
+          "category": "geolocation-blocking",
+          "risk-level": "high",
+          "compliance": "export-control"
+        },
+        "log": {
+          "atSessionStart": true,
+          "atSessionEnd": true,
+          "logForwarding": "threat-intelligence"
+        },
+        "schedule": null,
+        "negate": {
+          "source": false,
+          "destination": false
+        },
+        "disabled": false,
+        "hipProfiles": []
+      },
+      {
+        "name": "allow_verified_china_partners",
+        "source": [
+          "verified-china-partners"
+        ],
+        "destination": [
+          "partner-portal",
+          "10.50.100.0/24"
+        ],
+        "service": [
+          "https",
+          "tcp/443"
+        ],
+        "action": "allow",
+        "enabled": true,
+        "description": "Geolocation exception: Allow verified business partners from China",
+        "sourceRegions": [
+          "CN"
+        ],
+        "tags": {
+          "category": "geolocation-exception",
+          "partner": "verified",
+          "approval": "legal-department"
+        },
+        "log": {
+          "atSessionStart": true,
+          "atSessionEnd": true,
+          "logForwarding": "partner-access-logs"
+        },
+        "schedule": null,
+        "negate": {
+          "source": false,
+          "destination": false
+        },
+        "disabled": false,
+        "hipProfiles": [
+          "partner-security-baseline"
+        ]
+      },
+      {
+        "name": "allow_k8s_pod_to_pod",
+        "source": [
+          "k8s-pod-network",
+          "10.244.0.0/16"
+        ],
+        "destination": [
+          "k8s-pod-network",
+          "10.244.0.0/16"
+        ],
+        "service": [
+          "application-default"
+        ],
+        "application": [
+          "kubernetes",
+          "http",
+          "https",
+          "grpc"
+        ],
+        "action": "allow",
+        "enabled": true,
+        "description": "Container traffic: Allow Kubernetes pod-to-pod communication (CNI network)",
+        "tags": {
+          "category": "container-networking",
+          "platform": "kubernetes",
+          "traffic-type": "east-west"
+        },
+        "log": {
+          "atSessionStart": false,
+          "atSessionEnd": false,
+          "logForwarding": null
+        },
+        "qos": {
+          "type": "follow-c2s-flow",
+          "class": 4
+        },
+        "schedule": null,
+        "negate": {
+          "source": false,
+          "destination": false
+        },
+        "disabled": false,
+        "hipProfiles": []
+      },
+      {
+        "name": "allow_k8s_to_external_apis",
+        "source": [
+          "k8s-pod-network",
+          "10.244.0.0/16"
+        ],
+        "destination": [
+          "any"
+        ],
+        "service": [
+          "application-default"
+        ],
+        "application": [
+          "web-browsing",
+          "ssl",
+          "http-proxy"
+        ],
+        "action": "allow",
+        "enabled": true,
+        "description": "Container traffic: Allow pods to access external APIs (egress)",
+        "tags": {
+          "category": "container-networking",
+          "platform": "kubernetes",
+          "traffic-type": "egress"
+        },
+        "log": {
+          "atSessionStart": false,
+          "atSessionEnd": true,
+          "logForwarding": "k8s-egress-logs"
+        },
+        "schedule": null,
+        "negate": {
+          "source": false,
+          "destination": false
+        },
+        "disabled": false,
+        "hipProfiles": []
+      },
+      {
+        "name": "force_dns_to_port_53",
+        "source": [
+          "any"
+        ],
+        "destination": [
+          "dns-servers",
+          "10.10.10.53"
+        ],
+        "port": [
+          "tcp/53",
+          "udp/53"
+        ],
+        "service": [
+          "tcp/53",
+          "udp/53"
+        ],
+        "application": [
+          "dns"
+        ],
+        "action": "allow",
+        "enabled": true,
+        "description": "Application override: Force DNS application identification on port 53",
+        "override": true,
+        "tags": {
+          "category": "application-override",
+          "protocol": "dns"
+        },
+        "log": {
+          "atSessionStart": false,
+          "atSessionEnd": false,
+          "logForwarding": null
+        },
+        "schedule": null,
+        "negate": {
+          "source": false,
+          "destination": false
+        },
+        "disabled": false,
+        "hipProfiles": []
+      },
+      {
+        "name": "compliance_pci_dss_logging",
+        "source": [
+          "any"
+        ],
+        "destination": [
+          "pci-dss-servers",
+          "10.200.50.0/24"
+        ],
+        "service": [
+          "any"
+        ],
+        "action": "allow",
+        "enabled": true,
+        "description": "Compliance: Enhanced logging for PCI-DSS cardholder data environment",
+        "tags": {
+          "category": "compliance",
+          "standard": "pci-dss",
+          "scope": "cardholder-data-environment"
+        },
+        "log": {
+          "atSessionStart": true,
+          "atSessionEnd": true,
+          "logForwarding": "siem-compliance-pci",
+          "logSetting": "detailed"
+        },
+        "securityProfiles": {
+          "antivirus": "strict-av",
+          "antiSpyware": "strict",
+          "vulnerability": "critical-high-medium",
+          "urlFiltering": "strict",
+          "fileBlocking": "strict-file-blocking",
+          "dataFiltering": "credit-card-protection",
+          "wildfire": "default"
+        },
+        "schedule": null,
+        "negate": {
+          "source": false,
+          "destination": false
+        },
+        "disabled": false,
+        "hipProfiles": []
+      },
+      {
+        "name": "compliance_hipaa_healthcare",
+        "source": [
+          "healthcare-apps"
+        ],
+        "destination": [
+          "patient-data-servers",
+          "10.200.60.0/24"
+        ],
+        "service": [
+          "https",
+          "tcp/3389"
+        ],
+        "action": "allow",
+        "enabled": true,
+        "description": "Compliance: HIPAA-compliant access to patient health information (PHI) systems",
+        "tags": {
+          "category": "compliance",
+          "standard": "hipaa",
+          "data-type": "phi"
+        },
+        "log": {
+          "atSessionStart": true,
+          "atSessionEnd": true,
+          "logForwarding": "siem-compliance-hipaa"
+        },
+        "securityProfiles": {
+          "dataFiltering": "phi-protection",
+          "antivirus": "strict-av",
+          "fileBlocking": "strict-file-blocking"
+        },
+        "schedule": null,
+        "negate": {
+          "source": false,
+          "destination": false
+        },
+        "disabled": false,
+        "hipProfiles": [
+          "healthcare-compliance"
+        ]
+      }
+    ],
+    "nat": [
+      {
+        "name": "snat_internal_to_internet",
+        "description": "Source NAT for internal users accessing internet",
+        "sourceZone": [
+          "trust"
+        ],
+        "destinationZone": [
+          "untrust"
+        ],
+        "sourceAddress": [
+          "10.0.0.0/8",
+          "172.16.0.0/12",
+          "192.168.0.0/16"
+        ],
+        "destinationAddress": [
+          "any"
+        ],
+        "service": [
+          "any"
+        ],
+        "sourceTranslation": {
+          "type": "dynamic-ip-and-port",
+          "translatedAddress": [
+            "public-ip-pool"
+          ],
+          "interface": "ethernet1/1"
+        },
+        "enabled": true,
+        "tags": {
+          "category": "nat",
+          "type": "snat"
+        }
+      },
+      {
+        "name": "dnat_public_web_to_dmz",
+        "description": "Destination NAT for public web server access",
+        "sourceZone": [
+          "untrust"
+        ],
+        "destinationZone": [
+          "dmz"
+        ],
+        "sourceAddress": [
+          "any"
+        ],
+        "destinationAddress": [
+          "203.0.113.10"
+        ],
+        "service": [
+          "tcp/80",
+          "tcp/443"
+        ],
+        "destinationTranslation": {
+          "type": "static-ip",
+          "translatedAddress": "10.100.10.10",
+          "translatedPort": null
+        },
+        "enabled": true,
+        "tags": {
+          "category": "nat",
+          "type": "dnat",
+          "public-service": "web"
+        }
+      },
+      {
+        "name": "dnat_public_mail_to_dmz",
+        "description": "Destination NAT for mail server (SMTP/S, IMAP/S)",
+        "sourceZone": [
+          "untrust"
+        ],
+        "destinationZone": [
+          "dmz"
+        ],
+        "sourceAddress": [
+          "any"
+        ],
+        "destinationAddress": [
+          "203.0.113.20"
+        ],
+        "service": [
+          "tcp/25",
+          "tcp/465",
+          "tcp/587",
+          "tcp/143",
+          "tcp/993"
+        ],
+        "destinationTranslation": {
+          "type": "static-ip",
+          "translatedAddress": "10.100.10.20"
+        },
+        "enabled": true,
+        "tags": {
+          "category": "nat",
+          "type": "dnat",
+          "public-service": "mail"
+        }
+      }
+    ],
+    "decryption": [
+      {
+        "name": "decrypt_outbound_web_traffic",
+        "description": "SSL/TLS decryption for outbound web traffic (malware/DLP inspection)",
+        "sourceZone": [
+          "trust"
+        ],
+        "destinationZone": [
+          "untrust"
+        ],
+        "sourceAddress": [
+          "10.0.0.0/8",
+          "172.16.0.0/12"
+        ],
+        "destinationAddress": [
+          "any"
+        ],
+        "service": [
+          "https"
+        ],
+        "action": "decrypt",
+        "decryptionProfile": "standard-decryption",
+        "enabled": true,
+        "excludedCategories": [
+          "financial-services",
+          "health-and-medicine"
+        ],
+        "tags": {
+          "category": "ssl-inspection",
+          "compliance": "exclude-sensitive"
+        }
+      },
+      {
+        "name": "no_decrypt_trusted_domains",
+        "description": "Bypass decryption for trusted corporate domains",
+        "sourceZone": [
+          "trust"
+        ],
+        "destinationZone": [
+          "untrust"
+        ],
+        "sourceAddress": [
+          "any"
+        ],
+        "destinationAddress": [
+          "*.company.com",
+          "*.microsoft.com",
+          "*.office365.com"
+        ],
+        "service": [
+          "https"
+        ],
+        "action": "no-decrypt",
+        "enabled": true,
+        "tags": {
+          "category": "ssl-inspection",
+          "bypass": "trusted-domains"
+        }
+      }
+    ],
+    "dos": [
+      {
+        "name": "rate_limit_public_web_servers",
+        "description": "DoS protection for public-facing web servers",
+        "zone": [
+          "dmz"
+        ],
+        "interface": [
+          "ethernet1/2"
+        ],
+        "ipAddress": [
+          "10.100.10.0/24"
+        ],
+        "protection": {
+          "aggregate": {
+            "enable": true,
+            "alarm-rate": 10000,
+            "activate-rate": 15000,
+            "maximal-rate": 20000
+          },
+          "classified": {
+            "enable": true,
+            "alarm-rate": 1000,
+            "activate-rate": 1500,
+            "maximal-rate": 2000
+          }
+        },
+        "enabled": true,
+        "tags": {
+          "category": "dos-protection",
+          "target": "public-web"
+        }
       }
     ]
   },
@@ -736,5 +1447,910 @@
     },
     "rule-ordering": "Most specific rules first, default deny last",
     "testing": "Always test in non-production before deploying to production"
-  }
+  },
+  "security": [
+    {
+      "name": "allow_internal_web",
+      "source": [
+        "10.0.0.0/8",
+        "172.16.0.0/12"
+      ],
+      "destination": [
+        "any"
+      ],
+      "service": [
+        "http",
+        "https"
+      ],
+      "action": "allow",
+      "enabled": true,
+      "description": "Allow internal networks to access web services",
+      "tags": {
+        "category": "internet-access",
+        "owner": "network-team",
+        "compliance": "standard"
+      },
+      "log": {
+        "atSessionStart": true,
+        "atSessionEnd": true,
+        "logForwarding": "syslog-server"
+      },
+      "schedule": null,
+      "negate": {
+        "source": false,
+        "destination": false
+      },
+      "disabled": false,
+      "hipProfiles": []
+    },
+    {
+      "name": "block_external_ssh",
+      "source": [
+        "any"
+      ],
+      "destination": [
+        "10.0.0.0/8",
+        "172.16.0.0/12",
+        "192.168.0.0/16"
+      ],
+      "service": [
+        "ssh",
+        "tcp/2222"
+      ],
+      "action": "drop",
+      "enabled": true,
+      "description": "Block external SSH to internal networks (security hardening)",
+      "tags": {
+        "category": "security",
+        "owner": "security-team",
+        "compliance": "critical",
+        "threat-prevention": "brute-force"
+      },
+      "log": {
+        "atSessionStart": false,
+        "atSessionEnd": true,
+        "logForwarding": "security-siem"
+      },
+      "schedule": null,
+      "negate": {
+        "source": false,
+        "destination": false
+      },
+      "disabled": false,
+      "hipProfiles": []
+    },
+    {
+      "name": "allow_corporate_vpn",
+      "source": [
+        "vpn-users",
+        "vpn-gateway-pool"
+      ],
+      "destination": [
+        "corporate-network",
+        "10.50.0.0/16"
+      ],
+      "service": [
+        "application-default",
+        "tcp/443",
+        "udp/1194"
+      ],
+      "action": "allow",
+      "enabled": true,
+      "description": "Allow VPN users to access corporate resources",
+      "tags": {
+        "category": "remote-access",
+        "owner": "it-team",
+        "compliance": "standard"
+      },
+      "log": {
+        "atSessionStart": true,
+        "atSessionEnd": true,
+        "logForwarding": "vpn-logs"
+      },
+      "schedule": null,
+      "negate": {
+        "source": false,
+        "destination": false
+      },
+      "disabled": false,
+      "hipProfiles": [
+        "corporate-endpoint-security"
+      ],
+      "urlFiltering": {
+        "profile": "strict-browsing",
+        "override": false
+      },
+      "antivirus": "default-av-profile",
+      "antiSpyware": "strict-anti-spyware",
+      "vulnerability": "strict-vulnerability",
+      "fileBlocking": "sensitive-data-profile",
+      "dataFiltering": "pci-dss-data-filter",
+      "wildfire": "wildfire-analysis"
+    },
+    {
+      "name": "deny_p2p_protocols",
+      "source": [
+        "any"
+      ],
+      "destination": [
+        "any"
+      ],
+      "service": [
+        "bittorrent",
+        "p2p-applications"
+      ],
+      "application": [
+        "bittorrent",
+        "torrent",
+        "utorrent",
+        "emule",
+        "kazaa"
+      ],
+      "action": "deny",
+      "enabled": true,
+      "description": "Block peer-to-peer file sharing protocols (bandwidth + legal risk)",
+      "tags": {
+        "category": "bandwidth-management",
+        "owner": "network-team",
+        "compliance": "policy-enforcement"
+      },
+      "log": {
+        "atSessionStart": true,
+        "atSessionEnd": true,
+        "logForwarding": "bandwidth-logs"
+      },
+      "schedule": null,
+      "negate": {
+        "source": false,
+        "destination": false
+      },
+      "disabled": false,
+      "hipProfiles": []
+    },
+    {
+      "name": "allow_dmz_to_database",
+      "source": [
+        "dmz-web-servers",
+        "10.100.10.0/24"
+      ],
+      "destination": [
+        "database-cluster",
+        "10.200.20.0/24"
+      ],
+      "service": [
+        "mysql",
+        "tcp/3306",
+        "postgresql",
+        "tcp/5432"
+      ],
+      "action": "allow",
+      "enabled": true,
+      "description": "Allow DMZ web servers to access backend database cluster",
+      "tags": {
+        "category": "application-tier",
+        "owner": "devops-team",
+        "compliance": "segmentation",
+        "app-id": "ecommerce-platform"
+      },
+      "log": {
+        "atSessionStart": false,
+        "atSessionEnd": true,
+        "logForwarding": "app-logs"
+      },
+      "schedule": null,
+      "negate": {
+        "source": false,
+        "destination": false
+      },
+      "disabled": false,
+      "hipProfiles": [],
+      "sourceUser": [
+        "any"
+      ],
+      "destinationUser": [
+        "any"
+      ],
+      "qos": {
+        "type": "ip-precedence",
+        "value": 3
+      }
+    },
+    {
+      "name": "time_restricted_guest_wifi",
+      "source": [
+        "guest-wifi-zone",
+        "192.168.99.0/24"
+      ],
+      "destination": [
+        "any"
+      ],
+      "service": [
+        "http",
+        "https",
+        "dns"
+      ],
+      "action": "allow",
+      "enabled": true,
+      "description": "Guest WiFi access restricted to business hours (8h-18h weekdays)",
+      "tags": {
+        "category": "guest-access",
+        "owner": "it-team",
+        "compliance": "temporary-access"
+      },
+      "log": {
+        "atSessionStart": true,
+        "atSessionEnd": true,
+        "logForwarding": "guest-logs"
+      },
+      "schedule": {
+        "name": "business-hours",
+        "type": "recurring",
+        "days": [
+          "monday",
+          "tuesday",
+          "wednesday",
+          "thursday",
+          "friday"
+        ],
+        "timeRange": "08:00-18:00"
+      },
+      "negate": {
+        "source": false,
+        "destination": false
+      },
+      "disabled": false,
+      "hipProfiles": [],
+      "urlFiltering": {
+        "profile": "guest-safe-browsing",
+        "override": false,
+        "blockedCategories": [
+          "adult",
+          "gambling",
+          "malware",
+          "phishing",
+          "proxy-avoidance"
+        ]
+      }
+    },
+    {
+      "name": "block_known_malicious_ips",
+      "source": [
+        "external-threat-feed",
+        "threat-intel-list"
+      ],
+      "destination": [
+        "any"
+      ],
+      "service": [
+        "any"
+      ],
+      "action": "drop",
+      "enabled": true,
+      "description": "Drop traffic from known malicious IPs (threat intelligence feeds)",
+      "tags": {
+        "category": "threat-prevention",
+        "owner": "security-team",
+        "compliance": "critical",
+        "auto-updated": "true"
+      },
+      "log": {
+        "atSessionStart": true,
+        "atSessionEnd": true,
+        "logForwarding": "security-siem",
+        "logType": "threat"
+      },
+      "schedule": null,
+      "negate": {
+        "source": false,
+        "destination": false
+      },
+      "disabled": false,
+      "hipProfiles": []
+    },
+    {
+      "name": "allow_outbound_email",
+      "source": [
+        "mail-servers",
+        "10.20.30.0/24"
+      ],
+      "destination": [
+        "any"
+      ],
+      "service": [
+        "smtp",
+        "tcp/25",
+        "smtps",
+        "tcp/465",
+        "submission",
+        "tcp/587"
+      ],
+      "action": "allow",
+      "enabled": true,
+      "description": "Allow mail servers to send outbound email",
+      "tags": {
+        "category": "mail-infrastructure",
+        "owner": "it-team",
+        "compliance": "standard"
+      },
+      "log": {
+        "atSessionStart": false,
+        "atSessionEnd": true,
+        "logForwarding": "mail-logs"
+      },
+      "schedule": null,
+      "negate": {
+        "source": false,
+        "destination": false
+      },
+      "disabled": false,
+      "hipProfiles": [],
+      "antivirus": "email-av-profile",
+      "antiSpyware": "default-anti-spyware",
+      "fileBlocking": "email-attachment-filter",
+      "dataFiltering": "email-dlp-profile"
+    },
+    {
+      "name": "allow_icmp_diagnostic",
+      "source": [
+        "monitoring-servers",
+        "10.10.10.0/24"
+      ],
+      "destination": [
+        "any"
+      ],
+      "service": [
+        "icmp",
+        "ping",
+        "traceroute"
+      ],
+      "action": "allow",
+      "enabled": true,
+      "description": "Allow ICMP from monitoring servers for network diagnostics",
+      "tags": {
+        "category": "network-operations",
+        "owner": "network-team",
+        "compliance": "standard"
+      },
+      "log": {
+        "atSessionStart": false,
+        "atSessionEnd": false,
+        "logForwarding": null
+      },
+      "schedule": null,
+      "negate": {
+        "source": false,
+        "destination": false
+      },
+      "disabled": false,
+      "hipProfiles": [],
+      "rateLimit": {
+        "enabled": true,
+        "packetsPerSecond": 100
+      }
+    },
+    {
+      "name": "deny_risky_applications",
+      "source": [
+        "any"
+      ],
+      "destination": [
+        "any"
+      ],
+      "service": [
+        "application-default"
+      ],
+      "application": [
+        "teamviewer",
+        "anydesk",
+        "logmein",
+        "remote-desktop-sharing",
+        "tor",
+        "proxy-anonymizers"
+      ],
+      "action": "deny",
+      "enabled": true,
+      "description": "Block risky remote access and anonymization applications",
+      "tags": {
+        "category": "security",
+        "owner": "security-team",
+        "compliance": "critical",
+        "risk-level": "high"
+      },
+      "log": {
+        "atSessionStart": true,
+        "atSessionEnd": true,
+        "logForwarding": "security-siem",
+        "logType": "traffic"
+      },
+      "schedule": null,
+      "negate": {
+        "source": false,
+        "destination": false
+      },
+      "disabled": false,
+      "hipProfiles": []
+    },
+    {
+      "name": "allow_dev_team_ssh_managed",
+      "source": [
+        "dev-team-users"
+      ],
+      "destination": [
+        "development-servers",
+        "10.30.0.0/16"
+      ],
+      "service": [
+        "ssh",
+        "tcp/22"
+      ],
+      "action": "allow",
+      "enabled": true,
+      "description": "Allow dev team SSH access to development environment (user-based)",
+      "tags": {
+        "category": "developer-access",
+        "owner": "devops-team",
+        "compliance": "identity-aware",
+        "environment": "development"
+      },
+      "log": {
+        "atSessionStart": true,
+        "atSessionEnd": true,
+        "logForwarding": "audit-logs"
+      },
+      "schedule": null,
+      "negate": {
+        "source": false,
+        "destination": false
+      },
+      "disabled": false,
+      "hipProfiles": [
+        "dev-workstation-compliance"
+      ],
+      "sourceUser": [
+        "domain\\dev-team",
+        "LDAP-group://developers"
+      ],
+      "destinationUser": [
+        "any"
+      ],
+      "mfa": {
+        "required": true,
+        "profile": "duo-security"
+      }
+    },
+    {
+      "name": "emergency_disable_rule",
+      "source": [
+        "any"
+      ],
+      "destination": [
+        "any"
+      ],
+      "service": [
+        "any"
+      ],
+      "action": "allow",
+      "enabled": false,
+      "description": "Emergency allow-all rule (DISABLED by default, activate only during incident response)",
+      "tags": {
+        "category": "emergency",
+        "owner": "security-team",
+        "compliance": "incident-response-only",
+        "approval-required": "ciso"
+      },
+      "log": {
+        "atSessionStart": true,
+        "atSessionEnd": true,
+        "logForwarding": "emergency-logs",
+        "logType": "traffic"
+      },
+      "schedule": null,
+      "negate": {
+        "source": false,
+        "destination": false
+      },
+      "disabled": true,
+      "hipProfiles": []
+    },
+    {
+      "name": "test_drift_rule",
+      "source": [
+        "192.168.100.0/24"
+      ],
+      "destination": [
+        "any"
+      ],
+      "service": [
+        "http",
+        "https"
+      ],
+      "action": "allow",
+      "enabled": true,
+      "description": "Test rule to demonstrate drift detection",
+      "tags": {
+        "category": "test",
+        "owner": "devops-team"
+      }
+    },
+    {
+      "name": "allow_trust_to_dmz_https",
+      "source": [
+        "10.0.0.0/8",
+        "internal-users"
+      ],
+      "destination": [
+        "dmz-web-servers",
+        "10.100.10.0/24"
+      ],
+      "service": [
+        "https",
+        "tcp/443"
+      ],
+      "application": [
+        "web-browsing",
+        "ssl"
+      ],
+      "action": "allow",
+      "enabled": true,
+      "description": "East-West traffic: Internal users to DMZ web servers (micro-segmentation)",
+      "tags": {
+        "category": "east-west",
+        "zone": "trust-to-dmz",
+        "compliance": "pci-dss"
+      },
+      "log": {
+        "atSessionStart": true,
+        "atSessionEnd": true,
+        "logForwarding": "siem-compliance"
+      },
+      "securityProfiles": {
+        "antivirus": "strict-av",
+        "antiSpyware": "strict",
+        "vulnerability": "strict",
+        "urlFiltering": "default",
+        "fileBlocking": "strict-file-blocking",
+        "dataFiltering": null,
+        "wildfire": "default"
+      }
+    },
+    {
+      "name": "allow_aws_s3_access",
+      "source": [
+        "10.0.0.0/8",
+        "app-servers"
+      ],
+      "destination": [
+        "aws-s3-prefix-list"
+      ],
+      "service": [
+        "application-default"
+      ],
+      "application": [
+        "amazon-s3"
+      ],
+      "action": "allow",
+      "enabled": true,
+      "description": "Cloud integration: Allow access to AWS S3 buckets",
+      "tags": {
+        "category": "cloud-integration",
+        "cloud-provider": "aws",
+        "service": "s3"
+      },
+      "log": {
+        "atSessionStart": false,
+        "atSessionEnd": true,
+        "logForwarding": "cloud-access-logs"
+      }
+    },
+    {
+      "name": "allow_azure_storage",
+      "source": [
+        "10.0.0.0/8",
+        "app-servers"
+      ],
+      "destination": [
+        "azure-storage-fqdn"
+      ],
+      "service": [
+        "application-default"
+      ],
+      "application": [
+        "ms-azure-storage"
+      ],
+      "action": "allow",
+      "enabled": true,
+      "description": "Cloud integration: Allow access to Azure Blob Storage",
+      "tags": {
+        "category": "cloud-integration",
+        "cloud-provider": "azure",
+        "service": "blob-storage"
+      }
+    },
+    {
+      "name": "allow_gcp_storage",
+      "source": [
+        "10.0.0.0/8"
+      ],
+      "destination": [
+        "gcp-storage-fqdn"
+      ],
+      "service": [
+        "application-default"
+      ],
+      "application": [
+        "google-cloud-storage"
+      ],
+      "action": "allow",
+      "enabled": true,
+      "description": "Cloud integration: Allow access to Google Cloud Storage",
+      "tags": {
+        "category": "cloud-integration",
+        "cloud-provider": "gcp",
+        "service": "cloud-storage"
+      }
+    },
+    {
+      "name": "allow_office365_block_personal_cloud",
+      "source": [
+        "corporate-users",
+        "10.0.0.0/8"
+      ],
+      "destination": [
+        "any"
+      ],
+      "service": [
+        "application-default"
+      ],
+      "application": [
+        "office365-enterprise-access",
+        "ms-onedrive-enterprise"
+      ],
+      "action": "allow",
+      "enabled": true,
+      "description": "SaaS governance: Allow Office 365, block personal cloud storage",
+      "tags": {
+        "category": "saas-governance",
+        "approved": "yes"
+      }
+    },
+    {
+      "name": "block_personal_cloud_storage",
+      "source": [
+        "corporate-users",
+        "10.0.0.0/8"
+      ],
+      "destination": [
+        "any"
+      ],
+      "service": [
+        "application-default"
+      ],
+      "application": [
+        "dropbox-base",
+        "google-drive-base",
+        "box-base",
+        "icloud-base"
+      ],
+      "action": "deny",
+      "enabled": true,
+      "description": "SaaS governance: Block unauthorized personal cloud storage (shadow IT)",
+      "tags": {
+        "category": "saas-governance",
+        "shadow-it": "blocked",
+        "compliance": "data-loss-prevention"
+      },
+      "log": {
+        "atSessionStart": true,
+        "atSessionEnd": true,
+        "logForwarding": "security-incidents"
+      }
+    },
+    {
+      "name": "block_high_risk_countries",
+      "source": [
+        "high-risk-geoip"
+      ],
+      "destination": [
+        "corporate-network",
+        "10.0.0.0/8",
+        "dmz-servers"
+      ],
+      "service": [
+        "any"
+      ],
+      "action": "drop",
+      "enabled": true,
+      "description": "Geolocation blocking: Drop traffic from high-risk countries",
+      "sourceRegions": [
+        "CN",
+        "RU",
+        "KP",
+        "IR",
+        "SY"
+      ],
+      "tags": {
+        "category": "geolocation-blocking",
+        "risk-level": "high",
+        "compliance": "export-control"
+      },
+      "log": {
+        "atSessionStart": true,
+        "atSessionEnd": true,
+        "logForwarding": "threat-intelligence"
+      }
+    },
+    {
+      "name": "allow_legitimate_china_partners",
+      "source": [
+        "verified-china-partners"
+      ],
+      "destination": [
+        "partner-portal",
+        "10.50.100.0/24"
+      ],
+      "service": [
+        "https",
+        "tcp/443"
+      ],
+      "action": "allow",
+      "enabled": true,
+      "description": "Geolocation exception: Allow verified business partners from China",
+      "sourceRegions": [
+        "CN"
+      ],
+      "tags": {
+        "category": "geolocation-exception",
+        "partner": "verified"
+      }
+    },
+    {
+      "name": "allow_k8s_pod_to_pod",
+      "source": [
+        "k8s-pod-network",
+        "10.244.0.0/16"
+      ],
+      "destination": [
+        "k8s-pod-network",
+        "10.244.0.0/16"
+      ],
+      "service": [
+        "application-default"
+      ],
+      "application": [
+        "kubernetes",
+        "http",
+        "https",
+        "grpc"
+      ],
+      "action": "allow",
+      "enabled": true,
+      "description": "Container traffic: Allow Kubernetes pod-to-pod communication",
+      "tags": {
+        "category": "container-networking",
+        "platform": "kubernetes",
+        "traffic-type": "east-west"
+      },
+      "qos": {
+        "type": "follow-c2s-flow",
+        "class": 4
+      }
+    },
+    {
+      "name": "allow_k8s_to_external_apis",
+      "source": [
+        "k8s-pod-network",
+        "10.244.0.0/16"
+      ],
+      "destination": [
+        "any"
+      ],
+      "service": [
+        "application-default"
+      ],
+      "application": [
+        "web-browsing",
+        "ssl",
+        "http-proxy"
+      ],
+      "action": "allow",
+      "enabled": true,
+      "description": "Container traffic: Allow pods to access external APIs",
+      "tags": {
+        "category": "container-networking",
+        "platform": "kubernetes",
+        "traffic-type": "egress"
+      }
+    },
+    {
+      "name": "force_dns_to_port_53",
+      "source": [
+        "any"
+      ],
+      "destination": [
+        "dns-servers",
+        "10.10.10.53"
+      ],
+      "port": [
+        "tcp/53",
+        "udp/53"
+      ],
+      "application": [
+        "dns"
+      ],
+      "action": "allow",
+      "enabled": true,
+      "description": "Application override: Force DNS application on port 53",
+      "override": true,
+      "tags": {
+        "category": "application-override",
+        "protocol": "dns"
+      }
+    },
+    {
+      "name": "compliance_pci_dss_logging",
+      "source": [
+        "any"
+      ],
+      "destination": [
+        "pci-dss-servers",
+        "10.200.50.0/24"
+      ],
+      "service": [
+        "any"
+      ],
+      "action": "allow",
+      "enabled": true,
+      "description": "Compliance: Enhanced logging for PCI-DSS in-scope servers",
+      "tags": {
+        "category": "compliance",
+        "standard": "pci-dss",
+        "scope": "cardholder-data-environment"
+      },
+      "log": {
+        "atSessionStart": true,
+        "atSessionEnd": true,
+        "logForwarding": "siem-compliance-pci",
+        "logSetting": "detailed"
+      },
+      "securityProfiles": {
+        "antivirus": "strict-av",
+        "antiSpyware": "strict",
+        "vulnerability": "critical-high-medium",
+        "urlFiltering": "strict",
+        "fileBlocking": "strict-file-blocking",
+        "dataFiltering": "credit-card-protection",
+        "wildfire": "default"
+      }
+    },
+    {
+      "name": "compliance_hipaa_healthcare",
+      "source": [
+        "healthcare-apps"
+      ],
+      "destination": [
+        "patient-data-servers",
+        "10.200.60.0/24"
+      ],
+      "service": [
+        "https",
+        "tcp/3389"
+      ],
+      "action": "allow",
+      "enabled": true,
+      "description": "Compliance: HIPAA-compliant access to patient data systems",
+      "tags": {
+        "category": "compliance",
+        "standard": "hipaa",
+        "data-type": "phi"
+      },
+      "log": {
+        "atSessionStart": true,
+        "atSessionEnd": true,
+        "logForwarding": "siem-compliance-hipaa"
+      },
+      "securityProfiles": {
+        "dataFiltering": "phi-protection"
+      }
+    }
+  ]
 }
