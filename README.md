@@ -251,6 +251,254 @@ terraform apply -refresh-only
 curl http://localhost:3000/config
 ```
 
+## 🔥 Migrating to Real Palo Alto Panorama
+
+### Why Use the Mock API?
+
+The mock API is perfect for:
+- ✅ **CI/CD testing** without infrastructure costs
+- ✅ **Local development** and learning
+- ✅ **Demonstrations** and training
+- ✅ **No licensing required**
+
+### When to Use Real Panorama
+
+Migrate to real Panorama when you have:
+- Production firewall management needs
+- Access to Palo Alto VM-Series or appliances
+- Valid Palo Alto licenses
+
+### Option 1: Palo Alto VM-Series (Trial Available)
+
+**Get VM-Series:**
+1. Register at [Palo Alto Support Portal](https://support.paloaltonetworks.com/)
+2. Download VM-Series trial (30 days free)
+3. Deploy on VMware, AWS, Azure, or GCP
+4. Minimum requirements: 4GB RAM, 2 vCPU
+
+**Deploy VM-Series with Docker (unofficial):**
+```bash
+# Note: No official Docker image, but you can use EVE-NG or GNS3
+# For quick testing, use pfSense as a close alternative:
+docker run -d --name pfsense \
+  -p 8443:443 \
+  -p 8080:80 \
+  --privileged \
+  pfsense/pfsense
+```
+
+### Option 2: Use Official Palo Alto Terraform Provider
+
+Replace the mock API calls with the official provider:
+
+**1. Update `versions.tf`:**
+```hcl
+terraform {
+  required_providers {
+    panos = {
+      source  = "PaloAltoNetworks/panos"
+      version = "~> 1.11"
+    }
+  }
+}
+
+provider "panos" {
+  hostname = var.panorama_hostname
+  username = var.panorama_username
+  password = var.panorama_password  # Use env var or Key Vault
+  
+  # Or use API key
+  api_key = var.panorama_api_key
+}
+```
+
+**2. Create variables:**
+```hcl
+variable "panorama_hostname" {
+  description = "Panorama hostname or IP"
+  type        = string
+}
+
+variable "panorama_username" {
+  description = "Panorama admin username"
+  type        = string
+  sensitive   = true
+}
+
+variable "panorama_password" {
+  description = "Panorama admin password"
+  type        = string
+  sensitive   = true
+}
+```
+
+**3. Replace null_resource with panos resources:**
+
+Instead of:
+```hcl
+resource "null_resource" "panorama_config" {
+  # Mock API calls
+}
+```
+
+Use:
+```hcl
+# Security policy rules
+resource "panos_security_rule_group" "rules" {
+  position_keyword = "top"
+  
+  rule {
+    name                  = "allow_internal_web"
+    source_zones          = ["trust"]
+    source_addresses      = ["10.0.0.0/8"]
+    destination_zones     = ["untrust"]
+    destination_addresses = ["any"]
+    applications          = ["web-browsing", "ssl"]
+    services              = ["application-default"]
+    action                = "allow"
+  }
+}
+
+# Address objects
+resource "panos_address_object" "internal_network" {
+  name        = "internal-network"
+  value       = "10.0.0.0/8"
+  description = "Internal network range"
+}
+```
+
+**4. Example complete migration:**
+
+```hcl
+# panorama-integration/main.tf
+terraform {
+  required_providers {
+    panos = {
+      source  = "PaloAltoNetworks/panos"
+      version = "~> 1.11"
+    }
+  }
+}
+
+provider "panos" {
+  hostname = "panorama.company.com"
+  api_key  = var.panorama_api_key
+}
+
+# Commit configuration
+resource "panos_commit" "commit" {
+  description = "Terraform automated commit"
+  
+  depends_on = [
+    panos_security_rule_group.rules
+  ]
+}
+```
+
+### Option 3: Hybrid Approach (Recommended)
+
+Keep both mock and real firewall support:
+
+```hcl
+variable "use_real_firewall" {
+  description = "Use real Panorama instead of mock"
+  type        = bool
+  default     = false
+}
+
+locals {
+  api_endpoint = var.use_real_firewall ? var.panorama_api_url : "http://localhost:3000"
+}
+```
+
+### Testing with Real Panorama
+
+**Prerequisites:**
+```bash
+# Set credentials
+export TF_VAR_panorama_hostname="panorama.lab.local"
+export TF_VAR_panorama_username="admin"
+export TF_VAR_panorama_password="your-secure-password"
+
+# Or use API key (recommended)
+export TF_VAR_panorama_api_key="LUFRPT14MW5xOEo..."
+```
+
+**Test connection:**
+```bash
+# Using panos provider
+terraform init
+terraform plan
+```
+
+### Palo Alto Provider Resources
+
+The official provider supports:
+- ✅ Security policies
+- ✅ NAT policies  
+- ✅ Address/service objects
+- ✅ Zones and interfaces
+- ✅ Device groups (Panorama)
+- ✅ Templates (Panorama)
+- ✅ Commit operations
+
+**Documentation:**
+- [PaloAltoNetworks/panos Provider](https://registry.terraform.io/providers/PaloAltoNetworks/panos/latest/docs)
+- [Palo Alto API Documentation](https://docs.paloaltonetworks.com/pan-os/10-2/pan-os-panorama-api)
+
+### Alternative: pfSense (Open Source)
+
+For testing Terraform firewall automation without Palo Alto licenses:
+
+```bash
+# Deploy pfSense
+docker run -d --name pfsense \
+  -p 8443:443 \
+  --privileged \
+  pfsense/pfsense
+
+# Access: https://localhost:8443
+# Default: admin/pfsense
+```
+
+**pfSense Terraform Provider:**
+```hcl
+provider "pfsense" {
+  url      = "https://localhost:8443"
+  username = "admin"
+  password = "pfsense"
+  insecure = true  # For self-signed cert
+}
+```
+
+### Cost Comparison
+
+| Option | Cost | Best For |
+|--------|------|----------|
+| **Mock API** | Free | CI/CD, learning, demos |
+| **VM-Series Trial** | Free (30 days) | Testing real integration |
+| **VM-Series License** | $1,000+/year | Production (small) |
+| **Panorama** | $10,000+/year | Enterprise management |
+| **pfSense** | Free | Open-source alternative |
+
+### Migration Checklist
+
+- [ ] Obtain Palo Alto VM-Series or trial
+- [ ] Install and configure Panorama/firewall
+- [ ] Generate API key
+- [ ] Update Terraform provider to `panos`
+- [ ] Refactor resources from null_resource to panos_*
+- [ ] Test in non-production first
+- [ ] Update CI/CD credentials
+- [ ] Document custom configuration
+- [ ] Train team on real API differences
+
+### Support Resources
+
+- **Palo Alto Live Community**: https://live.paloaltonetworks.com/
+- **Terraform Provider Issues**: https://github.com/PaloAltoNetworks/terraform-provider-panos
+- **VM-Series Deployment Guides**: https://docs.paloaltonetworks.com/vm-series
+
 ## 📚 Learn More
 
 - [Architecture Details](docs/ARCHITECTURE.md)
