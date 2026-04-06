@@ -13,9 +13,9 @@ func TestSecurityRuleModule(t *testing.T) {
 	terraformOptions := terraform.WithDefaultRetryableErrors(t, &terraform.Options{
 		TerraformDir: "../terraform/modules/security-rule",
 		Vars: map[string]interface{}{
-			"name":        "test_allow_web",
-			"source":      []string{"10.0.0.0/8"},
-			"destination": []string{"any"},
+			"name":                  "test_allow_web",
+			"source_addresses":      []string{"10.0.0.0/8"},
+			"destination_addresses": []string{"any"},
 			"service":     []string{"http", "https"},
 			"action":      "allow",
 			"enabled":     true,
@@ -59,9 +59,9 @@ func TestSecurityRuleModuleValidation(t *testing.T) {
 	terraformOptions := terraform.WithDefaultRetryableErrors(t, &terraform.Options{
 		TerraformDir: "../terraform/modules/security-rule",
 		Vars: map[string]interface{}{
-			"name":        "test_invalid_action",
-			"source":      []string{"10.0.0.0/8"},
-			"destination": []string{"any"},
+			"name":                  "test_invalid_action",
+			"source_addresses":      []string{"10.0.0.0/8"},
+			"destination_addresses": []string{"any"},
 			"service":     []string{"http"},
 			"action":      "invalid", // Should fail validation
 			"enabled":     true,
@@ -82,9 +82,9 @@ func TestSecurityRuleDenyAction(t *testing.T) {
 	terraformOptions := terraform.WithDefaultRetryableErrors(t, &terraform.Options{
 		TerraformDir: "../terraform/modules/security-rule",
 		Vars: map[string]interface{}{
-			"name":        "test_block_ssh",
-			"source":      []string{"any"},
-			"destination": []string{"10.0.0.0/8"},
+			"name":                  "test_block_ssh",
+			"source_addresses":      []string{"any"},
+			"destination_addresses": []string{"10.0.0.0/8"},
 			"service":     []string{"ssh"},
 			"action":      "drop",
 			"enabled":     true,
@@ -106,9 +106,9 @@ func TestSecurityRuleWithAllProfiles(t *testing.T) {
 	terraformOptions := terraform.WithDefaultRetryableErrors(t, &terraform.Options{
 		TerraformDir: "../terraform/modules/security-rule",
 		Vars: map[string]interface{}{
-			"name":        "test_full_profiles",
-			"source":      []string{"trust-zone"},
-			"destination": []string{"dmz"},
+			"name":                  "test_full_profiles",
+			"source_addresses":      []string{"trust-zone"},
+			"destination_addresses": []string{"dmz"},
 			"service":     []string{"http", "https"},
 			"action":      "allow",
 			"enabled":     true,

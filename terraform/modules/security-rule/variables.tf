@@ -3,13 +3,13 @@ variable "name" {
   type        = string
 }
 
-variable "source" {
+variable "source_addresses" {
   description = "Source addresses/zones"
   type        = list(string)
   default     = []
 }
 
-variable "destination" {
+variable "destination_addresses" {
   description = "Destination addresses/zones"
   type        = list(string)
   default     = []

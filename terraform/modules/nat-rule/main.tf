@@ -10,9 +10,9 @@ terraform {
 
 resource "null_resource" "nat_rule" {
   triggers = {
-    name                  = var.name
-    source_address        = jsonencode(var.source_address)
-    destination_address   = jsonencode(var.destination_address)
+    name                    = var.name
+    source_addresses        = jsonencode(var.source_addresses)
+    destination_addresses   = jsonencode(var.destination_addresses)
     service              = var.service
     source_translation   = jsonencode(var.source_translation)
     destination_translation = var.destination_translation != null ? jsonencode(var.destination_translation) : null

@@ -13,9 +13,9 @@ func TestNATRuleModuleSNAT(t *testing.T) {
 	terraformOptions := terraform.WithDefaultRetryableErrors(t, &terraform.Options{
 		TerraformDir: "../terraform/modules/nat-rule",
 		Vars: map[string]interface{}{
-			"name":                "test_snat_outbound",
-			"source_address":      []string{"10.0.0.0/8"},
-			"destination_address": []string{"any"},
+			"name":                  "test_snat_outbound",
+			"source_addresses":      []string{"10.0.0.0/8"},
+			"destination_addresses": []string{"any"},
 			"service":             "any",
 			"source_translation": map[string]interface{}{
 				"type":              "dynamic-ip-and-port",
@@ -44,9 +44,9 @@ func TestNATRuleModuleDNAT(t *testing.T) {
 	terraformOptions := terraform.WithDefaultRetryableErrors(t, &terraform.Options{
 		TerraformDir: "../terraform/modules/nat-rule",
 		Vars: map[string]interface{}{
-			"name":                "test_dnat_web_server",
-			"source_address":      []string{"any"},
-			"destination_address": []string{"203.0.113.10"},
+			"name":                  "test_dnat_web_server",
+			"source_addresses":      []string{"any"},
+			"destination_addresses": []string{"203.0.113.10"},
 			"service":             "tcp/80",
 			"source_translation": map[string]interface{}{
 				"type": "none",
@@ -78,9 +78,9 @@ func TestNATRuleModuleDisabled(t *testing.T) {
 	terraformOptions := terraform.WithDefaultRetryableErrors(t, &terraform.Options{
 		TerraformDir: "../terraform/modules/nat-rule",
 		Vars: map[string]interface{}{
-			"name":                "test_disabled_nat",
-			"source_address":      []string{"10.0.0.0/8"},
-			"destination_address": []string{"any"},
+			"name":                  "test_disabled_nat",
+			"source_addresses":      []string{"10.0.0.0/8"},
+			"destination_addresses": []string{"any"},
 			"source_translation": map[string]interface{}{
 				"type":              "dynamic-ip-and-port",
 				"interface_address": "ethernet1/1",

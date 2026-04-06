@@ -36,9 +36,9 @@ module "security_rules" {
   
   for_each = local.security_rules_map
   
-  name        = each.value.name
-  source      = each.value.source
-  destination = each.value.destination
+  name                  = each.value.name
+  source_addresses      = each.value.source
+  destination_addresses = each.value.destination
   service     = each.value.service
   application = lookup(each.value, "application", ["any"])
   action      = each.value.action

@@ -27,8 +27,8 @@ locals {
 resource "null_resource" "security_rule" {
   triggers = {
     name            = var.name
-    source          = jsonencode(var.source)
-    destination     = jsonencode(var.destination)
+    source          = jsonencode(var.source_addresses)
+    destination     = jsonencode(var.destination_addresses)
     service         = jsonencode(var.service)
     application     = jsonencode(var.application)
     action          = var.action
